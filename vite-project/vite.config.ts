@@ -2,7 +2,31 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
+  server: {
+  proxy: {
+    '/api/v1/chat': {
+      target: 'https://kmbr-chat.elevatics.site',
+      changeOrigin: true,
+      configure: (proxy, options) => {
+        proxy.on('proxyReq', (proxyReq, req, res) => {
+          // Add API key to all requests
+          proxyReq.setHeader('X-API-Key', '44d5c2ac18ced6fc25c1e57dcdfygmdmrstt4577bf56e67540671a647465df4')
+        })
+        
+        proxy.on('proxyRes', (proxyRes, req, res) => {
+          // Remove or modify headers that reveal the external domain
+          delete proxyRes.headers['x-served-by']
+          delete proxyRes.headers['server']
+          
+          // Optionally set custom headers to mask the origin
+          proxyRes.headers['x-powered-by'] = 'Vue Chat App'
+          proxyRes.headers['server'] = 'Vite Dev Server'
+        })
+      }
+    }
+  }
+}
 })

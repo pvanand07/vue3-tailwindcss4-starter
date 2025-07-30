@@ -47,8 +47,11 @@ const toggleThinking = (messageIndex: number) => {
 }
 
 // Message handling functions
-const sendMessage = () => {
+const sendMessage = async () => {
   if (!inputMessage.value.trim() || chatStore.isLoading) {
+    if (chatStore.isLoading) {
+      chatStore.cancelRequest()
+    }
     return
   }
   
@@ -62,19 +65,14 @@ const sendMessage = () => {
 
   const userMessage = inputMessage.value
   inputMessage.value = ''
+  chatStore.isTyping = true
+  chatStore.isLoading = true
+
   scrollToBottom()
   
-  // Simulate bot response for UI testing
-  chatStore.isLoading = true
-  setTimeout(() => {
-    chatStore.addMessage({
-      role: 'assistant',
-      content: 'This is a sample response for UI testing. The actual API integration will be added later.',
-      isLoading: false
-    })
-    chatStore.isLoading = false
-    scrollToBottom()
-  }, 1000)
+  // Send message to API
+  await chatStore.sendMessageToAPI(userMessage)
+  scrollToBottom()
 }
 
 const handleEnterKey = (event: KeyboardEvent) => {
@@ -315,6 +313,18 @@ onMounted(() => {
                   <div class="text-slate-700 max-w-full w-full">
                     <div class="text-sm md:text-base leading-relaxed whitespace-pre-wrap">{{ message.content }}</div>
                     
+                    <!-- Stop Streaming Button -->
+                    <div v-if="message.isLoading" class="mt-3">
+                      <button 
+                        @click="chatStore.cancelRequest" 
+                        class="flex items-center gap-2 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md px-3 py-1.5 transition-colors"
+                        aria-label="Stop generating response"
+                      >
+                        <Square class="w-4 h-4" />
+                        <span>Stop</span>
+                      </button>
+                    </div>
+
                     <!-- Bot actions -->
                     <div class="flex items-center gap-4 mt-3 text-slate-400">
                        <button @click="copyMessage(message.content)" class="hover:text-slate-600 transition-colors" aria-label="Like response">
