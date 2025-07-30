@@ -6,8 +6,8 @@
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center space-x-1 sm:space-x-2 md:space-x-3">
             <div class="relative">
-              <div class="flex items-center justify-center w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 bg-gray-900 rounded-lg">
-                <Code class="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-5 sm:h-5 text-white" />
+              <div class="w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 bg-gray-900 rounded-lg overflow-hidden">
+                <img src="/src/assets/images/d-code.png" alt="D Code Logo" class="w-full h-full object-cover" />
               </div>
             </div>
             <span class="text-xs xs:text-sm sm:text-lg font-semibold text-gray-900">
@@ -343,8 +343,8 @@
         <div class="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-4 xs:gap-6 sm:gap-8">
           <div class="space-y-2 xs:space-y-3 sm:space-y-4 xs:col-span-2 lg:col-span-1">
             <div class="flex items-center space-x-2 xs:space-x-3">
-              <div class="flex items-center justify-center w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 bg-gray-900 rounded-lg">
-                <Code class="w-2.5 h-2.5 xs:w-3 xs:h-3 sm:w-5 sm:h-5 text-white" />
+              <div class="w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 bg-gray-900 rounded-lg overflow-hidden">
+                <img src="/src/assets/images/d-code.png" alt="D Code Logo" class="w-full h-full object-cover" />
               </div>
               <span class="text-xs xs:text-sm sm:text-base font-semibold text-gray-900">
                 D Code
@@ -405,7 +405,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { 
-  Code, 
   BookOpen, 
   Shield, 
   Users, 

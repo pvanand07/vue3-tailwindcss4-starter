@@ -28,15 +28,18 @@ export const useUIStore = defineStore('ui', () => {
   })
 
   const shouldAutoCloseSidebar = computed(() => {
-    return isMobile.value && window.innerWidth < 768
+    // Only auto-close when navigating between chats on mobile
+    return isMobile.value
   })
 
   // Mobile detection
   const updateMobileState = () => {
+    const wasMobile = isMobile.value
     isMobile.value = window.innerWidth < 768
     
-    // Auto-close sidebar on mobile when switching orientations
-    if (isMobile.value && sidebarOpen.value) {
+    // Only auto-close sidebar when switching from desktop to mobile
+    // This allows users to manually open the sidebar on mobile
+    if (!wasMobile && isMobile.value && sidebarOpen.value) {
       sidebarOpen.value = false
     }
   }
@@ -109,11 +112,13 @@ export const useUIStore = defineStore('ui', () => {
     
     const saved = ChatStorage.loadUIState(defaultState)
     
-    sidebarOpen.value = saved.sidebarOpen
-    theme.value = saved.theme
-    compactMode.value = saved.compactMode
-    showThinking.value = saved.showThinking
-    lastActiveChat.value = saved.lastActiveChat
+    if (saved) {
+      sidebarOpen.value = saved.sidebarOpen
+      theme.value = saved.theme
+      compactMode.value = saved.compactMode
+      showThinking.value = saved.showThinking
+      lastActiveChat.value = saved.lastActiveChat
+    }
     
     applyTheme()
   }
@@ -149,12 +154,8 @@ export const useUIStore = defineStore('ui', () => {
         }
       })
     
-    // Watch for mobile state changes and close sidebar if needed
-    watchEffect(() => {
-      if (shouldAutoCloseSidebar.value && sidebarOpen.value) {
-        closeSidebar()
-      }
-    })
+    // Note: Removed watchEffect that was preventing sidebar from opening on mobile
+    // Users can now manually open/close the sidebar on mobile devices
   }
 
   // Cleanup

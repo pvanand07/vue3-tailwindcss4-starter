@@ -69,7 +69,8 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   const loadFromStorage = () => {
-    chatHistory.value = ChatStorage.loadChatHistory([])
+    const loaded = ChatStorage.loadChatHistory([])
+    chatHistory.value = loaded || []
   }
 
   // Core functions

@@ -1,5 +1,156 @@
-# Vue 3 + TypeScript + Vite
+# Vue 3 AI Chatbot
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+A modern, fast Vue 3 AI chatbot built with TypeScript, Tailwind CSS v4, and Vite. Features real-time chat with AI, markdown rendering, and a beautiful responsive UI.
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+## 🚀 Features
+
+- **Modern Tech Stack**: Vue 3 + TypeScript + Tailwind CSS v4 + Vite
+- **Real-time Chat**: Stream responses from AI API
+- **Markdown Support**: Rich text rendering with syntax highlighting
+- **Responsive Design**: Works perfectly on desktop and mobile
+- **Dark/Light Mode**: Automatic theme switching
+- **Chat History**: Local storage for conversation persistence
+- **Modern UI**: Clean, accessible interface with smooth animations
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Vue 3 with Composition API
+- **Styling**: Tailwind CSS v4
+- **Build Tool**: Vite
+- **Type Safety**: TypeScript
+- **State Management**: Pinia
+- **Routing**: Vue Router with file-based routing
+- **Icons**: Lucide Vue
+- **Markdown**: Markdown-it
+- **Storage**: PouchDB for local data persistence
+
+## 📦 Installation
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm run dev
+
+# Build for production
+pnpm run build
+
+# Preview production build
+pnpm run preview
+```
+
+## 🚀 Deployment
+
+### Quick Deploy to Vercel
+
+1. **Using PowerShell Script** (Windows):
+   ```powershell
+   .\deploy.ps1
+   ```
+
+2. **Manual Deployment**:
+   ```bash
+   # Install Vercel CLI
+   npm install -g vercel
+   
+   # Login to Vercel
+   vercel login
+   
+   # Deploy
+   vercel --prod
+   ```
+
+3. **Via Vercel Dashboard**:
+   - Push your code to GitHub/GitLab/Bitbucket
+   - Connect your repository to Vercel
+   - Vercel will automatically detect the Vite configuration
+
+### Configuration Files
+
+- `vercel.json`: Configures build settings, API proxy, and SPA routing
+- `.gitignore`: Excludes unnecessary files from deployment
+- `DEPLOYMENT.md`: Detailed deployment guide
+
+## 🔧 Configuration
+
+### API Configuration
+
+The app is configured to proxy API calls to your chat backend. Update the following files for your API:
+
+- `vite.config.ts`: Development proxy settings
+- `vercel.json`: Production API proxy configuration
+- `src/api/chat.ts`: API client configuration
+
+### Environment Variables
+
+For production, you can set environment variables in the Vercel dashboard:
+- API endpoints
+- API keys
+- Feature flags
+
+## 📱 Usage
+
+1. **Start a New Chat**: Click "New Chat" to begin a conversation
+2. **Send Messages**: Type your message and press Enter
+3. **View Responses**: AI responses are streamed in real-time
+4. **Markdown Support**: Responses support rich formatting
+5. **Chat History**: Previous conversations are saved locally
+6. **Theme Toggle**: Switch between light and dark modes
+
+## 🏗️ Project Structure
+
+```
+src/
+├── api/           # API client and types
+├── components/    # Vue components
+│   ├── features/  # Feature-specific components
+│   └── layout/    # Layout components
+├── pages/         # Route components
+├── stores/        # Pinia stores
+├── types/         # TypeScript type definitions
+├── utils/         # Utility functions
+└── style.css      # Global styles and Tailwind imports
+```
+
+## 🧪 Development
+
+### Adding New Features
+
+1. Create components in `src/components/features/`
+2. Add routes in `src/pages/`
+3. Update stores in `src/stores/`
+4. Add types in `src/types/`
+
+### Testing
+
+```bash
+# Run tests (if configured)
+pnpm run test
+
+# Run with coverage
+pnpm run test:coverage
+```
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 🆘 Support
+
+For issues and questions:
+- Check the [deployment guide](DEPLOYMENT.md)
+- Review the [Vercel documentation](https://vercel.com/docs)
+- Open an issue in the repository
+
+---
+
+Built with ❤️ using Vue 3, Tailwind CSS v4, and Vite

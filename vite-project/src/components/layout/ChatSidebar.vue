@@ -1,6 +1,13 @@
 <template>
+  <!-- Mobile Backdrop Overlay -->
+  <div 
+    v-if="isOpen" 
+    @click="$emit('close')"
+    class="fixed inset-0 bg-black/50 z-40 md:hidden"
+  />
+  
   <aside 
-    class="w-80 h-full flex flex-col z-40 fixed md:absolute md:left-0 bg-primary text-slate-200 border-r border-slate-600 transition-transform duration-300 ease-in-out gpu-accelerated"
+    class="w-80 h-full flex flex-col z-50 fixed md:absolute md:left-0 bg-primary text-slate-200 border-r border-slate-600 transition-transform duration-300 ease-in-out gpu-accelerated"
     :class="{ '-translate-x-full': !isOpen }"
   >
     <!-- Sidebar Header -->

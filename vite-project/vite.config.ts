@@ -10,13 +10,13 @@ export default defineConfig({
     '/api/v1/chat': {
       target: 'https://kmbr-chat.elevatics.site',
       changeOrigin: true,
-      configure: (proxy, options) => {
-        proxy.on('proxyReq', (proxyReq, req, res) => {
+      configure: (proxy, _options) => {
+        proxy.on('proxyReq', (proxyReq, _req, _res) => {
           // Add API key to all requests
           proxyReq.setHeader('X-API-Key', '44d5c2ac18ced6fc25c1e57dcdfygmdmrstt4577bf56e67540671a647465df4')
         })
         
-        proxy.on('proxyRes', (proxyRes, req, res) => {
+        proxy.on('proxyRes', (proxyRes, _req, _res) => {
           // Remove or modify headers that reveal the external domain
           delete proxyRes.headers['x-served-by']
           delete proxyRes.headers['server']

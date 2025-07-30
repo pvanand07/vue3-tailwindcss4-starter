@@ -2,8 +2,8 @@
   <!-- Empty State - Building Codes Interface -->
   <div class="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-center">
     <!-- Main Icon -->
-    <div class="bg-slate-800 rounded-xl p-4 mb-6 shadow-lg">
-      <div class="text-white text-2xl font-mono" role="img" aria-label="Code icon">&lt;/&gt;</div>
+    <div class="bg-slate-800 rounded-xl w-16 h-16 mb-6 shadow-lg overflow-hidden">
+      <img src="/src/assets/images/d-code.png" alt="D Code Logo" class="w-full h-full object-cover" />
     </div>
     
     <!-- Main Heading -->

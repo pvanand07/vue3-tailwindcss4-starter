@@ -33,7 +33,7 @@
 
           <!-- Bot Response Content -->
           <div class="text-slate-700 max-w-full w-full">
-            <div class="text-sm md:text-base leading-relaxed whitespace-pre-wrap">{{ message.content }}</div>
+            <MarkdownRenderer :content="message.content" />
             
             <!-- Stop Streaming Button -->
             <div v-if="message.isLoading" class="mt-3">
@@ -87,6 +87,7 @@
 
 <script setup lang="ts">
 import { ThumbsUp, ThumbsDown, Copy, Share2, Square } from 'lucide-vue-next'
+import MarkdownRenderer from './MarkdownRenderer.vue'
 import type { ChatMessage } from '../../../types/chat'
 
 interface Props {

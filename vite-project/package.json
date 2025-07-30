@@ -12,7 +12,9 @@
     "@tailwindcss/postcss": "^4.1.11",
     "@types/pouchdb-core": "^7.0.15",
     "@unhead/vue": "^2.0.12",
+    "@vueuse/integrations": "^13.6.0",
     "lucide-vue-next": "^0.533.0",
+    "markdown-it": "^14.1.0",
     "pinia": "^3.0.3",
     "pouchdb": "^9.0.0",
     "tailwindcss": "^4.1.11",
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.11",
+    "@types/markdown-it": "^14.1.2",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-vue": "^5.1.4",
     "typed-router": "^0.2.0",
