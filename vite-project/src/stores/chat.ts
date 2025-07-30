@@ -2,58 +2,15 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
 import type { Chat, ChatMessage } from '../types/chat'
+import { chatAPI } from '../api/chat'
+import { ChatStorage } from '../utils/storage'
+import { DateUtils } from '../utils/date'
+import { TextUtils } from '../utils/text'
 
-// API Configuration
+// Store Configuration
 const CONFIG = {
-  API_ENDPOINT: '/api/v1/chat', // Using Vite proxy
   MAX_MESSAGE_LENGTH: 4000,
-  SAVE_DEBOUNCE_MS: 3000,
-  MAX_RETRIES: 3,
-  RETRY_DELAY_MS: 100
-}
-
-// Utility functions
-const utils = {
-  async delay(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms))
-  },
-
-  formatDateRelative(dateString: string) {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffTime = Math.abs(now.getTime() - date.getTime())
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-    
-    if (diffDays === 0) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    } else if (diffDays === 1) {
-      return 'Yesterday'
-    } else if (diffDays < 7) {
-      return `${diffDays} days ago`
-    } else {
-      return date.toLocaleDateString()
-    }
-  },
-
-  generateId() {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-  },
-
-  truncateText(text: string, maxLength: number) {
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
-  },
-
-  debounce(func: Function, wait: number) {
-    let timeout: number
-    return function executedFunction(...args: any[]) {
-      const later = () => {
-        clearTimeout(timeout)
-        func(...args)
-      }
-      clearTimeout(timeout)
-      timeout = setTimeout(later, wait)
-    }
-  }
+  SAVE_DEBOUNCE_MS: 3000
 }
 
 export const useChatStore = defineStore('chat', () => {
@@ -85,13 +42,13 @@ export const useChatStore = defineStore('chat', () => {
   })
 
   // Utils
-  const generateId = () => utils.generateId()
+  const generateId = () => TextUtils.generateId()
 
   const generateChatTitle = () => {
     const userMessages = messages.value.filter(msg => msg.role === 'user')
     if (userMessages.length > 0) {
       const firstMessage = userMessages[0].content
-      return utils.truncateText(firstMessage, 50)
+      return TextUtils.truncate(firstMessage, 50)
     }
     return 'New Chat'
   }
@@ -99,34 +56,20 @@ export const useChatStore = defineStore('chat', () => {
   const getLastMessage = (chat: Chat) => {
     const lastMsg = chat.messages[chat.messages.length - 1]
     if (!lastMsg) return 'No messages'
-    return utils.truncateText(lastMsg.content, 60)
+    return TextUtils.truncate(lastMsg.content, 60)
   }
 
   const formatDate = (dateString: string) => {
-    return utils.formatDateRelative(dateString)
+    return DateUtils.formatRelative(dateString)
   }
 
   // Persistence
-  const STORAGE_KEY = 'chat-history'
-
   const saveToStorage = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory.value))
-    } catch (error) {
-      console.error('Failed to save to localStorage:', error)
-    }
+    ChatStorage.saveChatHistory(chatHistory.value)
   }
 
   const loadFromStorage = () => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        chatHistory.value = JSON.parse(stored)
-      }
-    } catch (error) {
-      console.error('Failed to load from localStorage:', error)
-      chatHistory.value = []
-    }
+    chatHistory.value = ChatStorage.loadChatHistory([])
   }
 
   // Core functions
@@ -144,89 +87,48 @@ export const useChatStore = defineStore('chat', () => {
     try {
       abortController.value = new AbortController()
       
-      // Prepare request body
-      const requestBody: any = {
-        query: userMessage,
-        conversation_id: conversationId.value
-      }
-      
-      if (selectedModel.value) {
-        requestBody.model_id = selectedModel.value
-      }
-
-      const response = await fetch(CONFIG.API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(requestBody),
-        signal: abortController.value.signal
-      })
-      
-      if (!response.body) throw new Error('No response body')
-      if (!response.ok) throw new Error(`API Error: ${response.status}`)
+      // Create API request
+      const request = chatAPI.createRequest(
+        userMessage, 
+        conversationId.value!, 
+        selectedModel.value || undefined
+      )
 
       // Add assistant message placeholder
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: '',
-        id: generateId(),
-        isLoading: true,
-        tools: [],
-        thinkingExpanded: false
-      }
+      const assistantMessage = chatAPI.createLoadingMessage(generateId())
       messages.value.push(assistantMessage)
 
       const assistantIndex = messages.value.length - 1
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
       let responseContent = ''
       isTyping.value = false
-      
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+
+      // Handle tool starts
+      const onToolStart = (toolData: any) => {
+        if (!messages.value[assistantIndex].tools) {
+          messages.value[assistantIndex].tools = []
+        }
         
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
+        messages.value[assistantIndex].tools!.push(toolData)
         
-        for (const line of lines) {
-          if (!line.trim() || !line.startsWith('data:')) continue
-          
-          try {
-            const eventData = JSON.parse(line.substring(5).trim())
-            
-            if (eventData.type === 'tool_start') {
-              const toolName = eventData.tool
-              const toolInput = Array.isArray(eventData.input) 
-                ? eventData.input.join(', ') 
-                : JSON.stringify(eventData.input)
-              const reasoning = eventData.reasoning || ''
-              
-              if (!messages.value[assistantIndex].tools) {
-                messages.value[assistantIndex].tools = []
-              }
-              
-              messages.value[assistantIndex].tools!.push({
-                name: toolName,
-                input: toolInput,
-                reasoning: reasoning
-              })
-              
-              // Auto-expand thinking section on first tool
-              if (messages.value[assistantIndex].tools!.length === 1) {
-                messages.value[assistantIndex].thinkingExpanded = true
-              }
-            } else if (eventData.type === 'chunk') {
-              responseContent += eventData.content
-              messages.value[assistantIndex].content = responseContent
-            }
-          } catch (e) {
-            console.error('Error parsing JSON:', e, line)
-          }
+        // Auto-expand thinking section on first tool
+        if (messages.value[assistantIndex].tools!.length === 1) {
+          messages.value[assistantIndex].thinkingExpanded = true
         }
       }
+
+      // Handle content chunks
+      const onChunk = (content: string) => {
+        responseContent += content
+        messages.value[assistantIndex].content = responseContent
+      }
+
+      // Send message via API
+      await chatAPI.sendMessage(
+        request,
+        onToolStart,
+        onChunk,
+        abortController.value.signal
+      )
       
       messages.value[assistantIndex].isLoading = false
       
@@ -337,7 +239,7 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  const debouncedSaveChat = utils.debounce(saveCurrentChat, CONFIG.SAVE_DEBOUNCE_MS)
+  const debouncedSaveChat = TextUtils.debounce(saveCurrentChat, CONFIG.SAVE_DEBOUNCE_MS)
 
   const deleteChat = (chatId: string) => {
     const index = chatHistory.value.findIndex(chat => chat._id === chatId)

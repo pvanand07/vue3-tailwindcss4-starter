@@ -5,6 +5,7 @@
   --font-sans: "Poppins", system-ui, sans-serif;
   --color-primary: #1e293b;
   --color-secondary: #f1f5f9;
+  --breakpoint-xs: 475px;
 }
 
 /* Custom styles */
@@ -29,7 +30,6 @@ body {
 
 html, body {
   height: 100%;
-  overflow: hidden;
 }
 
 textarea {
