@@ -2,9 +2,12 @@
   <!-- Empty State - Building Codes Interface -->
   <div class="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-center">
     <!-- Main Icon -->
-    <div class="bg-slate-800 rounded-xl w-16 h-16 mb-6 shadow-lg overflow-hidden">
+    <div class="bg-slate-800 rounded-xl w-16 h-16 mb-2 shadow-lg overflow-hidden">
       <img src="/src/assets/images/d-code.png" alt="D Code Logo" class="w-full h-full object-cover" />
     </div>
+    
+  <!-- Brand Name -->
+  <h1 class="text-lg sm:text-xl md:text-2xl font-bold text-slate-700 mb-6">D code</h1>
     
     <!-- Main Heading -->
     <h1 class="text-xl sm:text-2xl md:text-3xl font-semibold text-slate-800 mb-3 px-4">
