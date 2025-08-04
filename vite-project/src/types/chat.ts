@@ -9,6 +9,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
   tools?: ChatTool[]
+  charts?: string[]
   thinkingExpanded?: boolean
   isLoading?: boolean
   timestamp?: string

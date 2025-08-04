@@ -31,6 +31,17 @@
             </div>
           </div>
 
+          <!-- Charts Section -->
+          <div v-if="message.charts && message.charts.length > 0" class="mb-4">
+            <!-- Debug info - remove in production -->
+            <div class="text-xs text-gray-500 mb-2">
+              Found {{ message.charts.length }} chart(s) in message
+            </div>
+            <div v-for="(chartSvg, chartIndex) in message.charts" :key="chartIndex">
+              <ChartRenderer :chart-svg="chartSvg" />
+            </div>
+          </div>
+
           <!-- Bot Response Content -->
           <div class="text-slate-700 max-w-full w-full">
             <MarkdownRenderer :content="message.content" />
@@ -88,6 +99,7 @@
 <script setup lang="ts">
 import { ThumbsUp, ThumbsDown, Copy, Share2, Square } from 'lucide-vue-next'
 import MarkdownRenderer from './MarkdownRenderer.vue'
+import ChartRenderer from './ChartRenderer.vue'
 import type { ChatMessage } from '../../../types/chat'
 
 interface Props {

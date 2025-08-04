@@ -117,6 +117,17 @@ export const useChatStore = defineStore('chat', () => {
         }
       }
 
+      // Handle tool ends
+      const onToolEnd = (toolName: string, chartSvg?: string) => {
+        if (chartSvg) {
+          // Add chart to the charts array
+          if (!messages.value[assistantIndex].charts) {
+            messages.value[assistantIndex].charts = []
+          }
+          messages.value[assistantIndex].charts!.push(chartSvg)
+        }
+      }
+
       // Handle content chunks
       const onChunk = (content: string) => {
         responseContent += content
@@ -127,6 +138,7 @@ export const useChatStore = defineStore('chat', () => {
       await chatAPI.sendMessage(
         request,
         onToolStart,
+        onToolEnd,
         onChunk,
         abortController.value.signal
       )
@@ -191,6 +203,7 @@ export const useChatStore = defineStore('chat', () => {
       ...msg,
       isLoading: false,
       tools: msg.tools || [],
+      charts: msg.charts || [],
       thinkingExpanded: msg.thinkingExpanded || false
     }))
   }
@@ -212,6 +225,7 @@ export const useChatStore = defineStore('chat', () => {
           content: msg.content,
           id: msg.id,
           tools: msg.tools || [],
+          charts: msg.charts || [],
           thinkingExpanded: msg.thinkingExpanded || false,
           timestamp: msg.timestamp || new Date().toISOString()
         })),
@@ -275,6 +289,7 @@ export const useChatStore = defineStore('chat', () => {
       id: generateId(),
       timestamp: new Date().toISOString(),
       tools: message.tools || [],
+      charts: message.charts || [],
       thinkingExpanded: message.thinkingExpanded || false
     }
     
@@ -345,6 +360,7 @@ export const useChatStore = defineStore('chat', () => {
               content: 'What are the setback requirements for residential buildings?',
               timestamp: new Date(Date.now() - 60000).toISOString(),
               tools: [],
+              charts: [],
               thinkingExpanded: false
             },
             { 
@@ -353,6 +369,7 @@ export const useChatStore = defineStore('chat', () => {
               content: 'The setback requirements vary by zone and local regulations. For residential buildings, typical setbacks include:\n\n1. Front setback: Usually 5-10 meters from the road\n2. Side setbacks: 1.5-3 meters from property boundaries\n3. Rear setback: 3-6 meters from the back boundary\n\nThese can vary based on your specific location and building codes.',
               timestamp: new Date(Date.now() - 30000).toISOString(),
               tools: [],
+              charts: [],
               thinkingExpanded: false
             }
           ],
@@ -370,6 +387,7 @@ export const useChatStore = defineStore('chat', () => {
               content: 'What are the fire safety requirements for commercial buildings in Kerala?',
               timestamp: new Date(Date.now() - 3600000).toISOString(),
               tools: [],
+              charts: [],
               thinkingExpanded: false
             },
             { 
@@ -378,6 +396,7 @@ export const useChatStore = defineStore('chat', () => {
               content: 'Fire safety requirements for commercial buildings in Kerala include:\n\n1. Fire escape routes with minimum 1.5m width\n2. Fire extinguishers at every 30m distance\n3. Sprinkler systems for buildings above 15m height\n4. NOC from Fire Department for buildings above 1000 sqm\n5. Emergency lighting and exit signs\n\nSpecific requirements depend on building height, occupancy, and usage type.',
               timestamp: new Date(Date.now() - 3300000).toISOString(),
               tools: [],
+              charts: [],
               thinkingExpanded: false
             }
           ],
@@ -395,14 +414,16 @@ export const useChatStore = defineStore('chat', () => {
               content: 'How many parking spaces are required for a shopping mall?',
               timestamp: new Date(Date.now() - 7200000).toISOString(),
               tools: [],
+              charts: [],
               thinkingExpanded: false
             },
             { 
               id: '6', 
               role: 'assistant', 
-              content: 'Parking requirements for shopping malls typically follow these guidelines:\n\n1. One car parking space for every 20-25 sqm of retail area\n2. Two-wheeler parking: 40% of car parking spaces\n3. Separate loading/unloading bays\n4. Handicapped parking: 2% of total spaces\n5. Minimum aisle width: 6m for two-way traffic\n\nLocal building byelaws may have specific variations.',
+                            content: 'Parking requirements for shopping malls typically follow these guidelines:\n\n1. One car parking space for every 20-25 sqm of retail area\n2. Two-wheeler parking: 40% of car parking spaces\n3. Separate loading/unloading bays\n4. Handicapped parking: 2% of total spaces\n5. Minimum aisle width: 6m for two-way traffic\n\nLocal building byelaws may have specific variations.',
               timestamp: new Date(Date.now() - 7000000).toISOString(),
               tools: [],
+              charts: [],
               thinkingExpanded: false
             }
           ],

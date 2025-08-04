@@ -15,11 +15,17 @@ export interface ChatRequest {
 }
 
 export interface ChatStreamEvent {
-  type: 'tool_start' | 'chunk'
+  type: 'tool_start' | 'chunk' | 'tool_end' | 'progress' | 'full_response'
+  name?: string
   tool?: string
   input?: any
   reasoning?: string
   content?: string
+  output?: string
+  data?: string
+  artifacts_data?: {
+    chart_svg?: string
+  }
 }
 
 export interface ChatToolData {
@@ -45,6 +51,7 @@ export class ChatAPI {
   async sendMessage(
     request: ChatRequest,
     onToolStart: (tool: ChatToolData) => void,
+    onToolEnd: (toolName: string, chartSvg?: string) => void,
     onChunk: (content: string) => void,
     signal?: AbortSignal
   ): Promise<void> {
@@ -79,7 +86,7 @@ export class ChatAPI {
             const eventData: ChatStreamEvent = JSON.parse(line.substring(5).trim())
 
             if (eventData.type === 'tool_start') {
-              const toolName = eventData.tool || 'Unknown Tool'
+              const toolName = eventData.name || eventData.tool || 'Unknown Tool'
               const toolInput = Array.isArray(eventData.input) 
                 ? eventData.input.join(', ') 
                 : JSON.stringify(eventData.input || '')
@@ -90,6 +97,10 @@ export class ChatAPI {
                 input: toolInput,
                 reasoning: reasoning
               })
+            } else if (eventData.type === 'tool_end') {
+              const toolName = eventData.name || 'Unknown Tool'
+              const chartSvg = eventData.artifacts_data?.chart_svg
+              onToolEnd(toolName, chartSvg)
             } else if (eventData.type === 'chunk' && eventData.content) {
               onChunk(eventData.content)
             }
