@@ -32,6 +32,7 @@
       <option value="google/gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
       <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
       <option value="qwen/qwen3-coder:floor">Qwen3 Coder</option>
+      <option value="z-ai/glm-4.5">GLM 4.5</option>
       <option value="">Grok 3 Mini</option>
     </select>
   </div>
