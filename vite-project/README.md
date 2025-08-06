@@ -1,16 +1,18 @@
-# Vue 3 AI Chatbot
+# Iresearcher - Internet Research Assistant
 
-A modern, fast Vue 3 AI chatbot built with TypeScript, Tailwind CSS v4, and Vite. Features real-time chat with AI, markdown rendering, and a beautiful responsive UI.
+A modern, fast Vue 3 AI research assistant built with TypeScript, Tailwind CSS v4, and Vite. Features real-time chat with AI, beautiful charts, markdown rendering, and a responsive UI for internet research and data analysis.
 
 ## 🚀 Features
 
 - **Modern Tech Stack**: Vue 3 + TypeScript + Tailwind CSS v4 + Vite
 - **Real-time Chat**: Stream responses from AI API
+- **Beautiful Charts**: Support for data visualization and charts
 - **Markdown Support**: Rich text rendering with syntax highlighting
 - **Responsive Design**: Works perfectly on desktop and mobile
 - **Dark/Light Mode**: Automatic theme switching
 - **Chat History**: Local storage for conversation persistence
 - **Modern UI**: Clean, accessible interface with smooth animations
+- **Research Focus**: Optimized for internet research and data analysis
 
 ## 🛠️ Tech Stack
 
@@ -91,12 +93,13 @@ For production, you can set environment variables in the Vercel dashboard:
 
 ## 📱 Usage
 
-1. **Start a New Chat**: Click "New Chat" to begin a conversation
-2. **Send Messages**: Type your message and press Enter
-3. **View Responses**: AI responses are streamed in real-time
-4. **Markdown Support**: Responses support rich formatting
-5. **Chat History**: Previous conversations are saved locally
-6. **Theme Toggle**: Switch between light and dark modes
+1. **Start a New Chat**: Click "New Chat" to begin a research session
+2. **Ask Research Questions**: Type your research questions and press Enter
+3. **View Responses**: AI responses are streamed in real-time with charts and data
+4. **Data Visualization**: Responses include beautiful charts and visualizations
+5. **Markdown Support**: Responses support rich formatting and code highlighting
+6. **Chat History**: Previous research sessions are saved locally
+7. **Theme Toggle**: Switch between light and dark modes
 
 ## 🏗️ Project Structure
 

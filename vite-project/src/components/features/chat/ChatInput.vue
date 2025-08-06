@@ -19,7 +19,7 @@
                 :disabled="isLoading"
                 class="w-full bg-transparent p-2 text-slate-800 placeholder-slate-500 focus:outline-none resize-none scrollbar-thin"
                 rows="1"
-                placeholder="Ask about building rules and regulations..."
+                placeholder="Ask me anything about research, data analysis, or market trends..."
                 maxlength="4000"
                 aria-label="Message input"
               ></textarea>

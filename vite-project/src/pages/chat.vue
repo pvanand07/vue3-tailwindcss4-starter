@@ -134,18 +134,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Empty State -->
-          <EmptyState 
-            v-if="!chatStore.hasUserMessages"
-            :selected-state="chatStore.selectedState"
-            :selected-code="chatStore.selectedCode"
-            :selected-project-type="chatStore.selectedProjectType"
-            :selected-site-type="chatStore.selectedSiteType"
-            @update:selected-state="chatStore.selectedState = $event"
-            @update:selected-code="chatStore.selectedCode = $event"
-            @update:selected-project-type="chatStore.selectedProjectType = $event"
-            @update:selected-site-type="chatStore.selectedSiteType = $event"
-            @generate-quick-question="generateQuickQuestion"
-          />
+          <EmptyState v-if="!chatStore.hasUserMessages" />
 
           <!-- Message Loop -->
           <ChatMessage 

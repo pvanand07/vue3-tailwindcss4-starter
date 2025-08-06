@@ -1,6 +1,6 @@
 <template>
-  <div v-if="chartSvg" class="chart-container my-4 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
-    <div class="chart-wrapper" v-html="chartSvg"></div>
+  <div v-if="chartSvg" ref="chartContainer" class="chart-container my-4 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+    <div ref="chartWrapper" class="chart-wrapper"></div>
     <!-- Debug info - remove in production -->
     <div class="text-xs text-gray-500 mt-2">
       Chart SVG length: {{ chartSvg?.length || 0 }} characters
@@ -9,11 +9,56 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, onMounted, nextTick } from 'vue'
+
 interface Props {
   chartSvg?: string
 }
 
 const props = defineProps<Props>()
+
+const chartWrapper = ref<HTMLElement | null>(null)
+
+const renderChart = () => {
+  if (props.chartSvg && chartWrapper.value) {
+    const container = chartWrapper.value
+    container.innerHTML = props.chartSvg
+
+    const scripts = container.querySelectorAll('script')
+
+    scripts.forEach(oldScript => {
+      const newScript = document.createElement('script')
+      
+      // The pygal script uses xlink:href
+      const scriptUrl = oldScript.getAttribute('xlink:href')
+      if (scriptUrl) {
+        newScript.src = scriptUrl
+      }
+
+      // Copy inline script content
+      if (oldScript.textContent) {
+        newScript.textContent = oldScript.textContent
+      }
+
+      // Remove the old script from the SVG
+      oldScript.parentNode?.removeChild(oldScript)
+      
+      // Append the new script to the document head to execute it
+      document.head.appendChild(newScript)
+    })
+  }
+}
+
+onMounted(() => {
+  renderChart()
+})
+
+watch(() => props.chartSvg, () => {
+  nextTick(() => {
+    renderChart()
+  })
+}, { immediate: true })
+
 </script>
 
 <style scoped>

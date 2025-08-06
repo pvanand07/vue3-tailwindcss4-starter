@@ -25,10 +25,6 @@ export const useChatStore = defineStore('chat', () => {
   const errorMessage = ref('')
   const abortController = ref<AbortController | null>(null)
   const selectedModel = ref('openai/gpt-4.1-mini')
-  const selectedState = ref('')
-  const selectedCode = ref('')
-  const selectedProjectType = ref('')
-  const selectedSiteType = ref('')
   const conversationId = ref<string | null>(null)
   const isSaving = ref(false)
 
@@ -320,28 +316,14 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   const generateQuickQuestion = () => {
-    let question = "What are the building regulations"
-    
-    if (selectedProjectType.value) {
-      question += ` for ${selectedProjectType.value} projects`
-    }
-    
-    if (selectedState.value) {
-      const stateName = selectedState.value.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-      question += ` in ${stateName}`
-    }
-    
-    if (selectedCode.value) {
-      question += ` according to ${selectedCode.value.toUpperCase()}`
-    }
-    
-    if (selectedSiteType.value) {
-      const siteType = selectedSiteType.value.replace(/-/g, ' ')
-      question += ` for ${siteType} sites`
-    }
-    
-    question += "?"
-    return question
+    const questions = [
+      "What are the latest trends in artificial intelligence?",
+      "How can I improve my data analysis skills?",
+      "What are the best practices for market research?",
+      "How do I create effective data visualizations?",
+      "What are the emerging technologies in renewable energy?"
+    ]
+    return questions[Math.floor(Math.random() * questions.length)]
   }
 
   // Initialize
@@ -352,12 +334,12 @@ export const useChatStore = defineStore('chat', () => {
       chatHistory.value = [
         {
           _id: 'sample-1',
-          title: 'Building Regulations Query',
+          title: 'Market Research Analysis',
           messages: [
             { 
               id: '1', 
               role: 'user', 
-              content: 'What are the setback requirements for residential buildings?',
+              content: 'What are the current trends in renewable energy markets?',
               timestamp: new Date(Date.now() - 60000).toISOString(),
               tools: [],
               charts: [],
@@ -366,7 +348,7 @@ export const useChatStore = defineStore('chat', () => {
             { 
               id: '2', 
               role: 'assistant', 
-              content: 'The setback requirements vary by zone and local regulations. For residential buildings, typical setbacks include:\n\n1. Front setback: Usually 5-10 meters from the road\n2. Side setbacks: 1.5-3 meters from property boundaries\n3. Rear setback: 3-6 meters from the back boundary\n\nThese can vary based on your specific location and building codes.',
+              content: 'The renewable energy market is experiencing significant growth with several key trends:\n\n1. Solar energy continues to dominate with decreasing costs\n2. Wind energy adoption is accelerating globally\n3. Energy storage solutions are becoming more affordable\n4. Green hydrogen is emerging as a key technology\n5. Policy support is driving market expansion\n\nThese trends vary by region and are influenced by local policies and market conditions.',
               timestamp: new Date(Date.now() - 30000).toISOString(),
               tools: [],
               charts: [],
@@ -379,12 +361,12 @@ export const useChatStore = defineStore('chat', () => {
         },
         {
           _id: 'sample-2',
-          title: 'Fire Safety Compliance',
+          title: 'Technology Trends',
           messages: [
             { 
               id: '3', 
               role: 'user', 
-              content: 'What are the fire safety requirements for commercial buildings in Kerala?',
+              content: 'What are the emerging technologies in artificial intelligence?',
               timestamp: new Date(Date.now() - 3600000).toISOString(),
               tools: [],
               charts: [],
@@ -393,7 +375,7 @@ export const useChatStore = defineStore('chat', () => {
             { 
               id: '4', 
               role: 'assistant', 
-              content: 'Fire safety requirements for commercial buildings in Kerala include:\n\n1. Fire escape routes with minimum 1.5m width\n2. Fire extinguishers at every 30m distance\n3. Sprinkler systems for buildings above 15m height\n4. NOC from Fire Department for buildings above 1000 sqm\n5. Emergency lighting and exit signs\n\nSpecific requirements depend on building height, occupancy, and usage type.',
+              content: 'Emerging AI technologies include:\n\n1. Large Language Models (LLMs) with improved reasoning\n2. Multimodal AI systems combining text, image, and audio\n3. Edge AI for real-time processing\n4. AI-powered automation and robotics\n5. Explainable AI for transparency\n6. Federated learning for privacy-preserving AI\n\nThese technologies are rapidly evolving and finding applications across various industries.',
               timestamp: new Date(Date.now() - 3300000).toISOString(),
               tools: [],
               charts: [],
@@ -406,12 +388,12 @@ export const useChatStore = defineStore('chat', () => {
         },
         {
           _id: 'sample-3',
-          title: 'Parking Requirements',
+          title: 'Data Analysis',
           messages: [
             { 
               id: '5', 
               role: 'user', 
-              content: 'How many parking spaces are required for a shopping mall?',
+              content: 'How can I analyze customer satisfaction data effectively?',
               timestamp: new Date(Date.now() - 7200000).toISOString(),
               tools: [],
               charts: [],
@@ -420,7 +402,7 @@ export const useChatStore = defineStore('chat', () => {
             { 
               id: '6', 
               role: 'assistant', 
-                            content: 'Parking requirements for shopping malls typically follow these guidelines:\n\n1. One car parking space for every 20-25 sqm of retail area\n2. Two-wheeler parking: 40% of car parking spaces\n3. Separate loading/unloading bays\n4. Handicapped parking: 2% of total spaces\n5. Minimum aisle width: 6m for two-way traffic\n\nLocal building byelaws may have specific variations.',
+              content: 'Effective customer satisfaction analysis involves:\n\n1. Collecting data through surveys, reviews, and feedback\n2. Using sentiment analysis to understand emotions\n3. Creating visualizations to identify patterns\n4. Segmenting customers by demographics or behavior\n5. Tracking satisfaction trends over time\n6. Correlating satisfaction with business metrics\n\nThis approach helps identify areas for improvement and measure the impact of changes.',
               timestamp: new Date(Date.now() - 7000000).toISOString(),
               tools: [],
               charts: [],
@@ -449,10 +431,6 @@ export const useChatStore = defineStore('chat', () => {
     errorMessage,
     abortController,
     selectedModel,
-    selectedState,
-    selectedCode,
-    selectedProjectType,
-    selectedSiteType,
     conversationId,
     isSaving,
 
