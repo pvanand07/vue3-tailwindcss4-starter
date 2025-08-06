@@ -114,7 +114,7 @@ export const useChatStore = defineStore('chat', () => {
       }
 
       // Handle tool ends
-      const onToolEnd = (toolName: string, chartSvg?: string) => {
+      const onToolEnd = (_toolName: string, chartSvg?: string) => {
         if (chartSvg) {
           // Add chart to the charts array
           if (!messages.value[assistantIndex].charts) {

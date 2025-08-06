@@ -97,14 +97,7 @@ const generateThought = () => {
   }, 2000)
 }
 
-const generateQuickQuestion = () => {
-  const question = chatStore.generateQuickQuestion()
-  if (chatInput.value) {
-    chatInput.value.setInputValue(question)
-    chatInput.value.focus()
-  }
-  scrollToBottom()
-}
+
 
 // Lifecycle
 onMounted(() => {

@@ -31,27 +31,32 @@
             </div>
           </div>
 
-          <!-- Charts Section (only for unreferenced charts) -->
-          <div v-if="message.charts && message.charts.length > 0 && !hasChartPlaceholders(message.content)" class="mb-4">
-            <!-- Debug info - remove in production -->
-            <div class="text-xs text-gray-500 mb-2">
-              Found {{ message.charts.length }} chart(s) in message (displaying after content)
-            </div>
-            <div v-for="(chartSvg, chartIndex) in message.charts" :key="chartIndex">
-              <ChartRenderer :chart-svg="chartSvg" />
-            </div>
-          </div>
-
-          <!-- Bot Response Content -->
+          <!-- Bot Response Content - Rendered as Segments -->
           <div class="text-slate-700 max-w-full w-full">
-            <MarkdownRenderer :content="message.content" :charts="message.charts" :chart-offset="chartOffset" />
+            <!-- Render content segments (markdown + inline charts) -->
+            <template v-for="(segment, segmentIndex) in contentSegments" :key="`segment-${segmentIndex}`">
+              <MarkdownRenderer 
+                v-if="segment.type === 'markdown'" 
+                :content="segment.content || ''" 
+              />
+              <ChartRenderer 
+                v-else-if="segment.type === 'chart' && getChartForId(segment.chartId!)" 
+                :chart-svg="getChartForId(segment.chartId!)!" 
+              />
+              <div 
+                v-else-if="segment.type === 'chart'"
+                class="chart-error my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-center"
+              >
+                <p class="text-sm">⚠️ Chart {{ segment.chartId }} not found</p>
+              </div>
+            </template>
             
-            <!-- Unreferenced Charts Section (for mixed scenarios) -->
-            <div v-if="message.charts && message.charts.length > 0 && hasChartPlaceholders(message.content) && getUnreferencedCharts(message.content, message.charts).length > 0" class="mt-4">
+            <!-- Unreferenced Charts Section (for after-message display) -->
+            <div v-if="unreferencedCharts.length > 0" class="mt-4">
               <div class="text-xs text-gray-500 mb-2">
                 Additional charts:
               </div>
-              <div v-for="(chartSvg, chartIndex) in getUnreferencedCharts(message.content, message.charts)" :key="`unreferenced-${chartIndex}`">
+              <div v-for="(chartSvg, chartIndex) in unreferencedCharts" :key="`unreferenced-${chartIndex}`">
                 <ChartRenderer :chart-svg="chartSvg" />
               </div>
             </div>
@@ -107,10 +112,12 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { ThumbsUp, ThumbsDown, Copy, Share2, Square } from 'lucide-vue-next'
 import MarkdownRenderer from './MarkdownRenderer.vue'
 import ChartRenderer from './ChartRenderer.vue'
 import type { ChatMessage } from '../../../types/chat'
+import { parseMessageContent, getUnreferencedCharts, type ContentSegment } from '../../../utils/contentParser'
 
 interface Props {
   message: ChatMessage
@@ -127,44 +134,34 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-// Function to detect if content contains chart placeholders
-const hasChartPlaceholders = (content: string): boolean => {
-  const chartRegex = /<chart\s+id\s*=\s*\d+\s*>/gi
-  return chartRegex.test(content)
-}
+// Parse message content into segments for rendering
+const contentSegments = computed((): ContentSegment[] => {
+  return parseMessageContent(props.message.content)
+})
 
-// Function to get chart IDs referenced in content
-const getReferencedChartIds = (content: string): number[] => {
-  const chartRegex = /<chart\s+id\s*=\s*(\d+)\s*>/gi
-  const ids: number[] = []
-  let match
-  
-  while ((match = chartRegex.exec(content)) !== null) {
-    const chartId = parseInt(match[1], 10)
-    if (!ids.includes(chartId)) {
-      ids.push(chartId)
-    }
+// Get chart SVG by global chart ID (with offset calculation)
+const getChartForId = (globalChartId: number): string | null => {
+  if (!props.message.charts || props.message.charts.length === 0) {
+    return null
   }
   
-  return ids
+  const localChartIndex = globalChartId - props.chartOffset - 1
+  
+  if (localChartIndex >= 0 && localChartIndex < props.message.charts.length) {
+    return props.message.charts[localChartIndex]
+  }
+  
+  return null
 }
 
-// Function to get unreferenced charts (for after-message display)
-const getUnreferencedCharts = (content: string, charts: string[]): string[] => {
-  if (!charts || charts.length === 0) return []
+// Get unreferenced charts for after-message display
+const unreferencedCharts = computed((): string[] => {
+  if (!props.message.charts || props.message.charts.length === 0) {
+    return []
+  }
   
-  const referencedIds = getReferencedChartIds(content)
-  const unreferencedCharts: string[] = []
-  
-  charts.forEach((chart, index) => {
-    const globalChartId = props.chartOffset + index + 1 // Calculate global chart ID
-    if (!referencedIds.includes(globalChartId)) {
-      unreferencedCharts.push(chart)
-    }
-  })
-  
-  return unreferencedCharts
-}
+  return getUnreferencedCharts(props.message.content, props.message.charts, props.chartOffset)
+})
 
 const toggleThinking = () => {
   emit('toggle-thinking', props.messageIndex)

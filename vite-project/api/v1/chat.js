@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     console.log('Request body:', req.body);
 
     // Forward the request to the external API
-    const response = await fetch('https://kmbr-chat.elevatics.site/api/v1/chat', {
+    const response = await fetch('https://api4iresearcher-v5.elevatics.site', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

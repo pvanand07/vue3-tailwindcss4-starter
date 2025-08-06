@@ -1,30 +1,24 @@
 <template>
   <div 
-    ref="markdownContainer"
     v-html="renderedMarkdown" 
     class="markdown-content text-sm md:text-base leading-relaxed"
   />
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed } from 'vue'
 import MarkdownIt from 'markdown-it'
 
 interface Props {
   content: string
-  charts?: string[]
-  chartOffset?: number
   class?: string
 }
 
 const props = defineProps<Props>()
 
-// Template ref for the container
-const markdownContainer = ref<HTMLElement | null>(null)
-
 // Configure markdown-it with sensible defaults
 const md = new MarkdownIt({
-  html: true, // Enable HTML tags for chart rendering
+  html: false, // Disable HTML tags for security
   linkify: true, // Auto-convert URLs to links
   breaks: true, // Convert '\n' to <br>
   typographer: true, // Enable smart quotes and other typographic replacements
@@ -48,77 +42,9 @@ md.renderer.rules.code_inline = (tokens: any[], idx: number) => {
   return `<code class="inline-code">${md.utils.escapeHtml(token.content)}</code>`
 }
 
-// Chart placeholder processing function
-const processChartPlaceholders = (content: string, charts?: string[], chartOffset = 0): string => {
-  if (!charts || charts.length === 0) {
-    return content
-  }
-
-  // Regex to match <chart id=X> patterns
-  const chartRegex = /<chart\s+id\s*=\s*(\d+)\s*>/gi
-  
-  return content.replace(chartRegex, (_, idStr) => {
-    const globalChartId = parseInt(idStr, 10)
-    const localChartIndex = globalChartId - chartOffset - 1 // Convert to local 0-based index
-    
-    if (localChartIndex >= 0 && localChartIndex < charts.length && charts[localChartIndex]) {
-      // Wrap the chart SVG in a container with proper styling
-      const chartSvg = charts[localChartIndex]
-      return `<div class="chart-container my-4 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
-        <div class="chart-wrapper">${chartSvg}</div>
-      </div>`
-    } else {
-      // Return placeholder for invalid chart ID
-      return `<div class="chart-error my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-        <p class="text-sm">⚠️ Chart ${globalChartId} not found (offset: ${chartOffset}, local index: ${localChartIndex})</p>
-      </div>`
-    }
-  })
-}
-
-// Function to execute scripts in chart SVGs (similar to ChartRenderer.vue)
-const executeChartScripts = () => {
-  nextTick(() => {
-    if (!markdownContainer.value) return
-    
-    const chartContainers = markdownContainer.value.querySelectorAll('.chart-wrapper')
-    
-    chartContainers.forEach(container => {
-      const scripts = container.querySelectorAll('script')
-      
-      scripts.forEach(oldScript => {
-        const newScript = document.createElement('script')
-        
-        // The pygal script uses xlink:href
-        const scriptUrl = oldScript.getAttribute('xlink:href')
-        if (scriptUrl) {
-          newScript.src = scriptUrl
-        }
-
-        // Copy inline script content
-        if (oldScript.textContent) {
-          newScript.textContent = oldScript.textContent
-        }
-
-        // Remove the old script from the SVG
-        oldScript.parentNode?.removeChild(oldScript)
-        
-        // Append the new script to the document head to execute it
-        document.head.appendChild(newScript)
-      })
-    })
-  })
-}
-
 const renderedMarkdown = computed(() => {
-  const processedContent = processChartPlaceholders(props.content, props.charts, props.chartOffset || 0)
-  return md.render(processedContent)
+  return md.render(props.content)
 })
-
-// Watch for changes and execute scripts after render
-watch(() => [props.content, props.charts, props.chartOffset], () => {
-  executeChartScripts()
-}, { flush: 'post' })
 </script>
 
 <style scoped>
@@ -225,50 +151,5 @@ watch(() => [props.content, props.charts, props.chartOffset], () => {
 .markdown-content :deep(li > ul),
 .markdown-content :deep(li > ol) {
   @apply mt-2 mb-0;
-}
-
-/* Chart styling for inline charts */
-.markdown-content :deep(.chart-container) {
-  @apply max-w-full overflow-x-auto;
-  max-width: 800px;
-  max-height: 600px;
-}
-
-.markdown-content :deep(.chart-wrapper) {
-  @apply min-h-[300px] flex items-center justify-center;
-  max-height: 500px;
-  overflow: hidden;
-}
-
-.markdown-content :deep(.chart-wrapper svg) {
-  @apply max-w-full h-auto;
-  min-height: 300px;
-  max-width: 750px;
-  max-height: 450px;
-}
-
-/* Style the chart elements */
-.markdown-content :deep(.pygal-chart) {
-  font-family: 'Inter', sans-serif;
-}
-
-.markdown-content :deep(.chart-wrapper .title) {
-  @apply text-base font-semibold;
-  fill: #374151;
-}
-
-.markdown-content :deep(.chart-wrapper .axis text) {
-  @apply text-xs;
-  fill: #6b7280;
-}
-
-.markdown-content :deep(.chart-wrapper .legend text) {
-  @apply text-xs;
-  fill: #374151;
-}
-
-/* Chart error styling */
-.markdown-content :deep(.chart-error) {
-  @apply text-center;
 }
 </style>

@@ -1,10 +1,6 @@
 <template>
-  <div v-if="chartSvg" ref="chartContainer" class="chart-container my-4 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
+  <div v-if="chartSvg" ref="chartContainer" class="chart-container my-4 p-4 bg-white rounded-lg shadow-sm">
     <div ref="chartWrapper" class="chart-wrapper"></div>
-    <!-- Debug info - remove in production -->
-    <div class="text-xs text-gray-500 mt-2">
-      Chart SVG length: {{ chartSvg?.length || 0 }} characters
-    </div>
   </div>
 </template>
 
@@ -64,18 +60,24 @@ watch(() => props.chartSvg, () => {
 <style scoped>
 .chart-container {
   max-width: 100%;
+  max-width: 800px;
+  max-height: 600px;
   overflow-x: auto;
 }
 
 .chart-wrapper {
   min-height: 300px;
+  max-height: 500px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .chart-wrapper :deep(svg) {
   max-width: 100%;
+  max-width: 750px;
+  max-height: 450px;
   height: auto;
   min-height: 300px;
 }
