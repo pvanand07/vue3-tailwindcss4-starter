@@ -34,4 +34,8 @@ export interface ChatState {
   isThinking: boolean
   errorMessage: string
   selectedModel: string
+  selectedState: string
+  selectedCode: string
+  selectedProjectType: string
+  selectedSiteType: string
 }

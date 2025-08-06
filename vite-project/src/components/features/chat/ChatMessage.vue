@@ -31,11 +31,11 @@
             </div>
           </div>
 
-          <!-- Charts Section -->
-          <div v-if="message.charts && message.charts.length > 0" class="mb-4">
+          <!-- Charts Section (only for unreferenced charts) -->
+          <div v-if="message.charts && message.charts.length > 0 && !hasChartPlaceholders(message.content)" class="mb-4">
             <!-- Debug info - remove in production -->
             <div class="text-xs text-gray-500 mb-2">
-              Found {{ message.charts.length }} chart(s) in message
+              Found {{ message.charts.length }} chart(s) in message (displaying after content)
             </div>
             <div v-for="(chartSvg, chartIndex) in message.charts" :key="chartIndex">
               <ChartRenderer :chart-svg="chartSvg" />
@@ -44,7 +44,17 @@
 
           <!-- Bot Response Content -->
           <div class="text-slate-700 max-w-full w-full">
-            <MarkdownRenderer :content="message.content" />
+            <MarkdownRenderer :content="message.content" :charts="message.charts" :chart-offset="chartOffset" />
+            
+            <!-- Unreferenced Charts Section (for mixed scenarios) -->
+            <div v-if="message.charts && message.charts.length > 0 && hasChartPlaceholders(message.content) && getUnreferencedCharts(message.content, message.charts).length > 0" class="mt-4">
+              <div class="text-xs text-gray-500 mb-2">
+                Additional charts:
+              </div>
+              <div v-for="(chartSvg, chartIndex) in getUnreferencedCharts(message.content, message.charts)" :key="`unreferenced-${chartIndex}`">
+                <ChartRenderer :chart-svg="chartSvg" />
+              </div>
+            </div>
             
             <!-- Stop Streaming Button -->
             <div v-if="message.isLoading" class="mt-3">
@@ -105,6 +115,7 @@ import type { ChatMessage } from '../../../types/chat'
 interface Props {
   message: ChatMessage
   messageIndex: number
+  chartOffset: number
 }
 
 interface Emits {
@@ -115,6 +126,45 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+// Function to detect if content contains chart placeholders
+const hasChartPlaceholders = (content: string): boolean => {
+  const chartRegex = /<chart\s+id\s*=\s*\d+\s*>/gi
+  return chartRegex.test(content)
+}
+
+// Function to get chart IDs referenced in content
+const getReferencedChartIds = (content: string): number[] => {
+  const chartRegex = /<chart\s+id\s*=\s*(\d+)\s*>/gi
+  const ids: number[] = []
+  let match
+  
+  while ((match = chartRegex.exec(content)) !== null) {
+    const chartId = parseInt(match[1], 10)
+    if (!ids.includes(chartId)) {
+      ids.push(chartId)
+    }
+  }
+  
+  return ids
+}
+
+// Function to get unreferenced charts (for after-message display)
+const getUnreferencedCharts = (content: string, charts: string[]): string[] => {
+  if (!charts || charts.length === 0) return []
+  
+  const referencedIds = getReferencedChartIds(content)
+  const unreferencedCharts: string[] = []
+  
+  charts.forEach((chart, index) => {
+    const globalChartId = props.chartOffset + index + 1 // Calculate global chart ID
+    if (!referencedIds.includes(globalChartId)) {
+      unreferencedCharts.push(chart)
+    }
+  })
+  
+  return unreferencedCharts
+}
 
 const toggleThinking = () => {
   emit('toggle-thinking', props.messageIndex)
