@@ -51,8 +51,8 @@
                   <span class="sm:hidden">✨</span>
                 </button>
                 <select 
-                  :model-value="selectedModel" 
-                  @update:model-value="$emit('update:selectedModel', $event)"
+                  :value="selectedModel" 
+                  @change="$emit('update:selectedModel', ($event.target as HTMLSelectElement).value)"
                   class="hidden sm:block text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer hover:bg-slate-100 rounded-md px-2 py-1 max-w-48"
                   aria-label="Select AI Model"
                 >
@@ -61,7 +61,7 @@
                   <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
                   <option value="qwen/qwen3-coder:floor">Qwen3 Coder</option>
                   <option value="z-ai/glm-4.5">GLM 4.5</option>
-                  <option value="">Grok 3 Mini</option>
+                  <option value="x-ai/grok-3-mini">Grok 3 Mini</option>
                 </select>
               </div>
               

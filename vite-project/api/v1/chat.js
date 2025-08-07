@@ -17,6 +17,7 @@ export default async function handler(req, res) {
   try {
     console.log('Forwarding request to external API...');
     console.log('Request body:', req.body);
+    console.log('🔍 API - Model ID received:', req.body.model_id);
 
     // Forward the request to the external API
     const response = await fetch('https://api4iresearcher-v5.elevatics.site/api/v1/chat', {
