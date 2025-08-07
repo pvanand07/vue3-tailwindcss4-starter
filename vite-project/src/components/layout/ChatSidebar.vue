@@ -13,7 +13,7 @@
     <!-- Sidebar Header -->
     <div class="p-4 border-b border-slate-600">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-white text-center w-full">D Code</h2>
+        <h2 class="text-lg font-semibold text-white text-center w-full">IResearcher</h2>
         <button 
           @click="$emit('close')"
           class="md:hidden p-1 hover:bg-slate-600 rounded text-white"
