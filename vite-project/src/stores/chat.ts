@@ -24,7 +24,7 @@ export const useChatStore = defineStore('chat', () => {
   const isThinking = ref(false)
   const errorMessage = ref('')
   const abortController = ref<AbortController | null>(null)
-  const selectedModel = ref(ChatStorage.loadSelectedModel() || 'openai/gpt-4.1-mini')
+  const selectedModel = ref(ChatStorage.loadSelectedModel() || 'openai/gpt-5-mini')
   console.log('📱 Chat Store - Initial selectedModel loaded:', selectedModel.value)
   const selectedState = ref('')
   const selectedCode = ref('')

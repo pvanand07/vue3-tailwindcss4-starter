@@ -56,6 +56,7 @@
                   class="hidden sm:block text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer hover:bg-slate-100 rounded-md px-2 py-1 max-w-48"
                   aria-label="Select AI Model"
                 >
+                  <option value="openai/gpt-5-mini">GPT-5 Mini</option>
                   <option value="openai/gpt-4.1-mini">GPT-4.1-Mini</option>
                   <option value="google/gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
                   <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
