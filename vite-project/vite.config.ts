@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
   proxy: {
     '/api/v1/chat': {
-      target: 'https://kmbr-chat.elevatics.site',
+      target: 'http://localhost:8000',
       changeOrigin: true,
       configure: (proxy, _options) => {
         proxy.on('proxyReq', (proxyReq, _req, _res) => {
