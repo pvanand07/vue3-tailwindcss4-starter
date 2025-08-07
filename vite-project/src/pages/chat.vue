@@ -119,7 +119,7 @@ onUnmounted(() => {
       <!-- Floating Controls -->
       <FloatingControls 
         :sidebar-open="uiStore.sidebarOpen"
-        :selected-model="chatStore.selectedModel || 'openai/gpt-5-mini'"
+        :selected-model="chatStore.selectedModel || 'openai/gpt-4.1-mini'"
         @toggle-sidebar="uiStore.toggleSidebar"
         @start-new-chat="startNewChat"
         @update:selected-model="(model) => { console.log('🎯 FloatingControls - Model updated to:', model); chatStore.selectedModel = model }"
@@ -170,7 +170,7 @@ onUnmounted(() => {
         :error-message="chatStore.errorMessage"
         :is-loading="chatStore.isLoading"
         :is-thinking="chatStore.isThinking"
-        :selected-model="chatStore.selectedModel || 'openai/gpt-5-mini'"
+        :selected-model="chatStore.selectedModel || 'openai/gpt-4.1-mini'"
         @send-message="handleSendMessage"
         @file-upload="handleFileUpload"
         @generate-thought="generateThought"

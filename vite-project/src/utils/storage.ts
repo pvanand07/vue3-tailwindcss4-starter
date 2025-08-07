@@ -126,7 +126,7 @@ export const ChatStorage = {
     return result
   },
   
-  loadSelectedModel: (defaultValue: string = 'openai/gpt-5-mini') => {
+  loadSelectedModel: (defaultValue: string = 'openai/gpt-4.1-mini') => {
     const loaded = LocalStorage.load(STORAGE_KEYS.SELECTED_MODEL, defaultValue)
     console.log('💾 Storage - Loading selectedModel:', loaded, 'default:', defaultValue)
     return loaded || defaultValue
