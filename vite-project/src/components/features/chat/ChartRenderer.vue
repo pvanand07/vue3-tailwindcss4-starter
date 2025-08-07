@@ -4,7 +4,8 @@
       <div class="font-medium mb-1">Chart Error</div>
       <div class="text-sm">{{ error }}</div>
     </div>
-    <div v-else-if="loading" class="chart-loading bg-slate-50 border border-slate-200 rounded-lg p-8 text-center text-slate-600">
+    <div v-else-if="loading"
+      class="chart-loading bg-slate-50 border border-slate-200 rounded-lg p-8 text-center text-slate-600">
       <div class="animate-pulse">Loading chart...</div>
     </div>
     <div v-else class="chart-wrapper bg-white border border-slate-200 rounded-lg p-4">
@@ -19,6 +20,10 @@ import {
   Chart,
   CategoryScale,
   LinearScale,
+  RadialLinearScale,
+  TimeScale,
+  TimeSeriesScale,
+  LogarithmicScale,
   BarElement,
   LineElement,
   PointElement,
@@ -26,10 +31,15 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
   BarController,
   LineController,
   PieController,
   DoughnutController,
+  BubbleController,
+  ScatterController,
+  RadarController,
+  PolarAreaController,
   ChartConfiguration
 } from 'chart.js'
 
@@ -37,6 +47,10 @@ import {
 Chart.register(
   CategoryScale,
   LinearScale,
+  RadialLinearScale,
+  TimeScale,
+  TimeSeriesScale,
+  LogarithmicScale,
   BarElement,
   LineElement,
   PointElement,
@@ -44,10 +58,15 @@ Chart.register(
   Title,
   Tooltip,
   Legend,
+  Filler,
   BarController,
   LineController,
   PieController,
-  DoughnutController
+  DoughnutController,
+  BubbleController,
+  ScatterController,
+  RadarController,
+  PolarAreaController
 )
 
 interface Props {
@@ -74,21 +93,21 @@ const parseConfig = (configInput: string | ChartConfiguration): ChartConfigurati
 
     // Parse the configuration string
     let configStr = configInput.trim()
-    
+
     // Remove 'config = ' prefix if present
     if (configStr.startsWith('config = ')) {
       configStr = configStr.substring('config = '.length)
     }
-    
+
     // Use Function constructor for safer evaluation
     const configFunction = new Function('return ' + configStr)
     const config = configFunction()
-    
+
     // Validate required properties
     if (!config.type || !config.data) {
       throw new Error('Chart configuration must include "type" and "data" properties')
     }
-    
+
     return config as ChartConfiguration
   } catch (err) {
     console.error('Failed to parse chart config:', err)
@@ -98,17 +117,17 @@ const parseConfig = (configInput: string | ChartConfiguration): ChartConfigurati
 
 const createChart = () => {
   if (!canvasRef.value) return
-  
+
   loading.value = true
   error.value = null
-  
+
   try {
     const parsedConfig = parseConfig(props.config)
-    
+
     if (!parsedConfig) {
       throw new Error('Invalid chart configuration')
     }
-    
+
     // Ensure responsive options
     const config: ChartConfiguration = {
       ...parsedConfig,
@@ -118,12 +137,12 @@ const createChart = () => {
         ...parsedConfig.options
       }
     }
-    
+
     // Destroy existing chart if it exists
     if (chartInstance.value) {
       chartInstance.value.destroy()
     }
-    
+
     // Create new chart
     chartInstance.value = new Chart(canvasRef.value, config)
     loading.value = false
@@ -160,6 +179,8 @@ watch(() => props.config, () => {
   position: relative;
   height: 300px;
   width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .chart-wrapper canvas {

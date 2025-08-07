@@ -14,6 +14,10 @@ import {
   Chart,
   CategoryScale,
   LinearScale,
+  RadialLinearScale,
+  TimeScale,
+  TimeSeriesScale,
+  LogarithmicScale,
   BarElement,
   LineElement,
   PointElement,
@@ -21,10 +25,15 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
   BarController,
   LineController,
   PieController,
   DoughnutController,
+  BubbleController,
+  ScatterController,
+  RadarController,
+  PolarAreaController,
   type ChartConfiguration
 } from 'chart.js'
 
@@ -32,6 +41,10 @@ import {
 Chart.register(
   CategoryScale,
   LinearScale,
+  RadialLinearScale,
+  TimeScale,
+  TimeSeriesScale,
+  LogarithmicScale,
   BarElement,
   LineElement,
   PointElement,
@@ -39,10 +52,15 @@ Chart.register(
   Title,
   Tooltip,
   Legend,
+  Filler,
   BarController,
   LineController,
   PieController,
-  DoughnutController
+  DoughnutController,
+  BubbleController,
+  ScatterController,
+  RadarController,
+  PolarAreaController
 )
 
 interface Props {
@@ -157,6 +175,8 @@ const renderCharts = async () => {
       wrapper.style.position = 'relative'
       wrapper.style.height = '300px'
       wrapper.style.width = '100%'
+      wrapper.style.maxWidth = '600px'
+      wrapper.style.margin = '0 auto'
       
       canvas.style.position = 'absolute'
       canvas.style.top = '0'
@@ -326,6 +346,8 @@ onUnmounted(() => {
   position: relative;
   height: 300px;
   width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .markdown-content :deep(.chart-error) {
