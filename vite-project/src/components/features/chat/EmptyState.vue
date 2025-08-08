@@ -25,8 +25,8 @@
       <div class="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-md transition-shadow">
         <h3 class="font-medium text-slate-800 mb-2 text-sm">State / Region</h3>
         <select 
-          :model-value="selectedState" 
-          @update:model-value="$emit('update:selectedState', $event)"
+          :value="selectedState" 
+          @change="$emit('update:selectedState', ($event.target as HTMLSelectElement).value)"
           class="w-full p-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
           aria-label="Select state or region"
         >
@@ -40,8 +40,8 @@
       <div class="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-md transition-shadow">
         <h3 class="font-medium text-slate-800 mb-2 text-sm">Applicable Code</h3>
         <select 
-          :model-value="selectedCode" 
-          @update:model-value="$emit('update:selectedCode', $event)"
+          :value="selectedCode" 
+          @change="$emit('update:selectedCode', ($event.target as HTMLSelectElement).value)"
           class="w-full p-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
           aria-label="Choose building codes"
         >
@@ -57,8 +57,8 @@
       <div class="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-md transition-shadow">
         <h3 class="font-medium text-slate-800 mb-2 text-sm">Project Type</h3>
         <select 
-          :model-value="selectedProjectType" 
-          @update:model-value="$emit('update:selectedProjectType', $event)"
+          :value="selectedProjectType" 
+          @change="$emit('update:selectedProjectType', ($event.target as HTMLSelectElement).value)"
           class="w-full p-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
           aria-label="Select project category"
         >
@@ -75,8 +75,8 @@
       <div class="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-md transition-shadow">
         <h3 class="font-medium text-slate-800 mb-2 text-sm">Site Type</h3>
         <select 
-          :model-value="selectedSiteType" 
-          @update:model-value="$emit('update:selectedSiteType', $event)"
+          :value="selectedSiteType" 
+          @change="$emit('update:selectedSiteType', ($event.target as HTMLSelectElement).value)"
           class="w-full p-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
           aria-label="Specify site characteristics"
         >
