@@ -3,7 +3,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   {
     path: '/',
-    redirect: '/chat'
+    name: 'home',
+    component: () => import('../pages/(home).vue')
   },
   {
     path: '/chat',

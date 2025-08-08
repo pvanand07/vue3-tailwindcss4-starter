@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     console.log('🔍 API - Model ID received:', req.body.model_id);
 
     // Forward the request to the external API
-    const response = await fetch('https://api4iresearcher-v5.elevatics.site/api/v1/chat', {
+    const response = await fetch('https://kmbr-chat.elevatics.site/api/v1/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
