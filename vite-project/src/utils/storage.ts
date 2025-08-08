@@ -95,7 +95,8 @@ export class LocalStorage {
 export const STORAGE_KEYS = {
   CHAT_HISTORY: 'chat-history',
   USER_PREFERENCES: 'user-preferences',
-  UI_STATE: 'ui-state'
+  UI_STATE: 'ui-state',
+  SELECTED_MODEL: 'selected-model'
 } as const
 
 // Convenience functions for chat storage
@@ -116,5 +117,18 @@ export const ChatStorage = {
     LocalStorage.save(STORAGE_KEYS.UI_STATE, state),
   
   loadUIState: (defaultValue: Record<string, any> = {}) => 
-    LocalStorage.load(STORAGE_KEYS.UI_STATE, defaultValue)
+    LocalStorage.load(STORAGE_KEYS.UI_STATE, defaultValue),
+  
+  saveSelectedModel: (model: string) => {
+    console.log('💾 Storage - Saving selectedModel:', model)
+    const result = LocalStorage.save(STORAGE_KEYS.SELECTED_MODEL, model)
+    console.log('💾 Storage - Save result:', result)
+    return result
+  },
+  
+  loadSelectedModel: (defaultValue: string = 'openai/gpt-4.1-mini') => {
+    const loaded = LocalStorage.load(STORAGE_KEYS.SELECTED_MODEL, defaultValue)
+    console.log('💾 Storage - Loading selectedModel:', loaded, 'default:', defaultValue)
+    return loaded || defaultValue
+  }
 }

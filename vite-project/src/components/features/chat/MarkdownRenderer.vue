@@ -1,13 +1,67 @@
 <template>
   <div 
-    v-html="renderedMarkdown" 
+    ref="containerRef"
     class="markdown-content text-sm md:text-base leading-relaxed"
+    v-html="renderedMarkdown"
   />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, nextTick, watch, onUnmounted, onMounted } from 'vue'
 import MarkdownIt from 'markdown-it'
+import { markdownChartPlugin } from '../../../utils/markdownChartPlugin'
+import {
+  Chart,
+  CategoryScale,
+  LinearScale,
+  RadialLinearScale,
+  TimeScale,
+  TimeSeriesScale,
+  LogarithmicScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  BarController,
+  LineController,
+  PieController,
+  DoughnutController,
+  BubbleController,
+  ScatterController,
+  RadarController,
+  PolarAreaController,
+  type ChartConfiguration
+} from 'chart.js'
+
+// Register Chart.js components
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  RadialLinearScale,
+  TimeScale,
+  TimeSeriesScale,
+  LogarithmicScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  BarController,
+  LineController,
+  PieController,
+  DoughnutController,
+  BubbleController,
+  ScatterController,
+  RadarController,
+  PolarAreaController
+)
 
 interface Props {
   content: string
@@ -16,6 +70,9 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const containerRef = ref<HTMLElement | null>(null)
+const chartInstances = ref<Chart[]>([])
+
 // Configure markdown-it with sensible defaults
 const md = new MarkdownIt({
   html: false, // Disable HTML tags for security
@@ -23,6 +80,9 @@ const md = new MarkdownIt({
   breaks: true, // Convert '\n' to <br>
   typographer: true, // Enable smart quotes and other typographic replacements
 })
+
+// Add chart plugin
+md.use(markdownChartPlugin)
 
 // Custom renderer for code blocks to add proper CSS classes
 md.renderer.rules.fence = (tokens: any[], idx: number) => {
@@ -44,6 +104,129 @@ md.renderer.rules.code_inline = (tokens: any[], idx: number) => {
 
 const renderedMarkdown = computed(() => {
   return md.render(props.content)
+})
+
+// Function to parse chart configuration
+const parseChartConfig = (configStr: string): ChartConfiguration | null => {
+  try {
+    let cleanConfig = configStr.trim()
+    
+    // Remove 'config = ' prefix if present
+    if (cleanConfig.startsWith('config = ')) {
+      cleanConfig = cleanConfig.substring('config = '.length)
+    }
+    
+    // Use Function constructor for safer evaluation
+    const configFunction = new Function('return ' + cleanConfig)
+    const config = configFunction()
+    
+    // Validate required properties
+    if (!config.type || !config.data) {
+      throw new Error('Chart configuration must include "type" and "data" properties')
+    }
+    
+    return config as ChartConfiguration
+  } catch (err) {
+    console.error('Failed to parse chart config:', err)
+    return null
+  }
+}
+
+// Function to render charts after markdown is processed
+const renderCharts = async () => {
+  await nextTick()
+  
+  if (!containerRef.value) return
+  
+  // Clean up existing charts
+  chartInstances.value.forEach(chart => chart.destroy())
+  chartInstances.value = []
+  
+  // Find chart containers and render charts
+  const chartContainers = containerRef.value.querySelectorAll('.chart-container')
+  
+  chartContainers.forEach((container) => {
+    const chartId = container.getAttribute('data-chart-id')
+    const configStr = container.getAttribute('data-chart-config')
+    
+    if (!chartId || !configStr) return
+    
+    try {
+      // Parse the configuration
+      const config = parseChartConfig(configStr)
+      
+      if (!config) {
+        container.innerHTML = `
+          <div class="chart-error bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-4">
+            <div class="font-medium mb-1">Chart Error</div>
+            <div class="text-sm">Invalid chart configuration</div>
+          </div>
+        `
+        return
+      }
+      
+      // Create canvas element
+      const canvas = document.createElement('canvas')
+      canvas.id = `chart-canvas-${chartId}`
+      
+      // Create wrapper with styling
+      const wrapper = document.createElement('div')
+      wrapper.className = 'chart-wrapper bg-white border border-slate-200 rounded-lg p-4 mb-4'
+      wrapper.style.position = 'relative'
+      wrapper.style.height = '300px'
+      wrapper.style.width = '100%'
+      wrapper.style.maxWidth = '600px'
+      wrapper.style.margin = '0 auto'
+      
+      canvas.style.position = 'absolute'
+      canvas.style.top = '0'
+      canvas.style.left = '0'
+      canvas.style.width = '100%'
+      canvas.style.height = '100%'
+      
+      wrapper.appendChild(canvas)
+      container.appendChild(wrapper)
+      
+      // Ensure responsive options
+      const chartConfig: ChartConfiguration = {
+        ...config,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          ...config.options
+        }
+      }
+      
+      // Create chart
+      const chart = new Chart(canvas, chartConfig)
+      chartInstances.value.push(chart)
+      
+    } catch (err) {
+      console.error('Failed to create chart:', err)
+      container.innerHTML = `
+        <div class="chart-error bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-4">
+          <div class="font-medium mb-1">Chart Error</div>
+          <div class="text-sm">${err instanceof Error ? err.message : 'Unknown error occurred'}</div>
+        </div>
+      `
+    }
+  })
+}
+
+// Watch for content changes and re-render charts
+watch(() => props.content, () => {
+  renderCharts()
+}, { flush: 'post' })
+
+// Initial render of charts
+onMounted(() => {
+  renderCharts()
+})
+
+// Clean up charts on unmount
+onUnmounted(() => {
+  chartInstances.value.forEach(chart => chart.destroy())
+  chartInstances.value = []
 })
 </script>
 
@@ -151,5 +334,27 @@ const renderedMarkdown = computed(() => {
 .markdown-content :deep(li > ul),
 .markdown-content :deep(li > ol) {
   @apply mt-2 mb-0;
+}
+
+/* Chart container styling */
+.markdown-content :deep(.chart-container) {
+  @apply mb-4;
+}
+
+.markdown-content :deep(.chart-wrapper) {
+  @apply bg-white border border-slate-200 rounded-lg p-4 mb-4;
+  position: relative;
+  height: 300px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.markdown-content :deep(.chart-error) {
+  @apply bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-4;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 </style>

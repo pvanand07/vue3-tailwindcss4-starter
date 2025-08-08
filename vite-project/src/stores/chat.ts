@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { v4 as uuidv4 } from 'uuid'
 import type { Chat, ChatMessage } from '../types/chat'
 import { chatAPI } from '../api/chat'
@@ -24,7 +24,8 @@ export const useChatStore = defineStore('chat', () => {
   const isThinking = ref(false)
   const errorMessage = ref('')
   const abortController = ref<AbortController | null>(null)
-  const selectedModel = ref('openai/gpt-4.1-mini')
+  const selectedModel = ref(ChatStorage.loadSelectedModel() || 'openai/gpt-4.1-mini')
+  console.log('📱 Chat Store - Initial selectedModel loaded:', selectedModel.value)
   const selectedState = ref('')
   const selectedCode = ref('')
   const selectedProjectType = ref('')
@@ -73,6 +74,15 @@ export const useChatStore = defineStore('chat', () => {
     chatHistory.value = loaded || []
   }
 
+  // Watch for model changes and persist them
+  watch(selectedModel, (newModel) => {
+    console.log('📱 Chat Store - Model changed to:', newModel)
+    if (newModel) {
+      ChatStorage.saveSelectedModel(newModel)
+      console.log('📱 Chat Store - Model saved to storage')
+    }
+  })
+
   // Core functions
   const resetConversation = () => {
     conversationId.value = uuidv4()
@@ -89,11 +99,13 @@ export const useChatStore = defineStore('chat', () => {
       abortController.value = new AbortController()
       
       // Create API request
+      console.log('🚀 API Call - Using selectedModel:', selectedModel.value)
       const request = chatAPI.createRequest(
         userMessage, 
         conversationId.value!, 
         selectedModel.value || undefined
       )
+      console.log('🚀 API Call - Request object:', request)
 
       // Add assistant message placeholder
       const assistantMessage = chatAPI.createLoadingMessage(generateId())
