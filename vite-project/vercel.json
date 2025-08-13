@@ -8,6 +8,10 @@
       "destination": "/api/v1/chat.js"
     },
     {
+      "source": "/api/v1/content/(.*)",
+      "destination": "/api/v1/content.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

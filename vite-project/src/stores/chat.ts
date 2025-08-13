@@ -26,8 +26,8 @@ export const useChatStore = defineStore('chat', () => {
   const abortController = ref<AbortController | null>(null)
   const selectedModel = ref(ChatStorage.loadSelectedModel() || 'openai/gpt-4.1-mini')
   console.log('📱 Chat Store - Initial selectedModel loaded:', selectedModel.value)
-  const selectedState = ref('')
-  const selectedCode = ref('')
+  const selectedStates = ref<string[]>([])
+  const selectedCodes = ref<string[]>([])
   const selectedProjectType = ref('')
   const selectedSiteType = ref('')
   const conversationId = ref<string | null>(null)
@@ -98,12 +98,35 @@ export const useChatStore = defineStore('chat', () => {
     try {
       abortController.value = new AbortController()
       
+      // Build context from selections
+      const prettyStates = selectedStates.value.map(s => 
+        s.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+      )
+
+      const codesArray: string[] = selectedCodes.value.slice()
+      const statesArray: string[] = selectedStates.value.slice()
+
+      const contextParts: string[] = []
+      contextParts.push('project details')
+      contextParts.push(`location: ${prettyStates.length ? prettyStates.join(', ') : 'N/A'}`)
+      contextParts.push(`selected codes: ${codesArray.length ? codesArray.join(', ') : 'N/A'}`)
+      contextParts.push(`project category: ${selectedProjectType.value || 'N/A'}`)
+      if (selectedSiteType.value) {
+        contextParts.push(`site type: ${selectedSiteType.value}`)
+      }
+      const contextString = contextParts.join('\n\n')
+
       // Create API request
       console.log('🚀 API Call - Using selectedModel:', selectedModel.value)
       const request = chatAPI.createRequest(
-        userMessage, 
-        conversationId.value!, 
-        selectedModel.value || undefined
+        userMessage,
+        conversationId.value!,
+        selectedModel.value || undefined,
+        {
+          codes: codesArray,
+          states: statesArray,
+          context: contextString,
+        }
       )
       console.log('🚀 API Call - Request object:', request)
 
@@ -323,13 +346,15 @@ export const useChatStore = defineStore('chat', () => {
       question += ` for ${selectedProjectType.value} projects`
     }
     
-    if (selectedState.value) {
-      const stateName = selectedState.value.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-      question += ` in ${stateName}`
+    if (selectedStates.value.length) {
+      const stateNames = selectedStates.value
+        .map(s => s.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))
+        .join(', ')
+      question += ` in ${stateNames}`
     }
     
-    if (selectedCode.value) {
-      question += ` according to ${selectedCode.value.toUpperCase()}`
+    if (selectedCodes.value.length) {
+      question += ` according to ${selectedCodes.value.map(c => c.toUpperCase()).join(', ')}`
     }
     
     if (selectedSiteType.value) {
@@ -440,8 +465,8 @@ export const useChatStore = defineStore('chat', () => {
     errorMessage,
     abortController,
     selectedModel,
-    selectedState,
-    selectedCode,
+    selectedStates,
+    selectedCodes,
     selectedProjectType,
     selectedSiteType,
     conversationId,

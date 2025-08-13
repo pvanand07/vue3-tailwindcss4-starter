@@ -23,6 +23,31 @@ export interface Chat {
   updatedAt: string
 }
 
+export interface Reference {
+  floats_block: string
+  building_code: string
+  start: number
+  end: number
+  original_text: string
+}
+
+export interface ReferenceContent {
+  document_id: string
+  section_id: string
+  section_info: {
+    title: string
+    id: string
+    page_range: string
+    content_summary: string
+    refers_to: string[]
+    subsections: any[]
+  }
+  pages: Array<{
+    index: number
+    markdown: string
+  }>
+}
+
 export interface ChatState {
   messages: ChatMessage[]
   chatHistory: Chat[]

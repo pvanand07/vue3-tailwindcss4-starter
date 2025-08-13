@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tailwindcss/postcss": "^4.1.11",
     "@types/pouchdb-core": "^7.0.15",
     "@unhead/vue": "^2.0.12",
     "@vueuse/integrations": "^13.6.0",

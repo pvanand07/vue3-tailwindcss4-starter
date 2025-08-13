@@ -1,8 +1,9 @@
-import type { ChatMessage } from '../types/chat'
+import type { ChatMessage, Reference, ReferenceContent } from '../types/chat'
 
 // API Configuration
 export const API_CONFIG = {
   ENDPOINT: '/api/v1/chat', // Using Vite proxy
+  REFERENCE_ENDPOINT: '/api/v1/content',
   MAX_RETRIES: 3,
   RETRY_DELAY_MS: 100
 } as const
@@ -12,6 +13,9 @@ export interface ChatRequest {
   query: string
   conversation_id: string
   model_id?: string
+  codes?: string[]
+  states?: string[]
+  context?: string
 }
 
 export interface ChatStreamEvent {
@@ -133,7 +137,12 @@ export class ChatAPI {
   /**
    * Prepare API request object
    */
-  createRequest(query: string, conversationId: string, modelId?: string): ChatRequest {
+  createRequest(
+    query: string,
+    conversationId: string,
+    modelId?: string,
+    extras?: { codes?: string[]; states?: string[]; context?: string }
+  ): ChatRequest {
     const request: ChatRequest = {
       query,
       conversation_id: conversationId
@@ -143,7 +152,66 @@ export class ChatAPI {
       request.model_id = modelId
     }
 
+    if (extras?.codes && extras.codes.length > 0) {
+      request.codes = extras.codes
+    }
+    if (extras?.states && extras.states.length > 0) {
+      request.states = extras.states
+    }
+    if (extras?.context) {
+      request.context = extras.context
+    }
+
     return request
+  }
+
+  /**
+   * Fetch reference content from the API
+   */
+  async fetchReferenceContent(reference: Reference): Promise<ReferenceContent> {
+    const { building_code, floats_block } = reference
+    
+    // Extract the first reference ID from floats_block
+    // floats_block contains things like "3.24,3.1" or "Section 3.24"
+    // We want to extract the first number (e.g., "3.24")
+    let sectionId = building_code // fallback
+    
+    // Parse the first number from floats_block
+    const numberMatch = floats_block.match(/\d+(?:\.\d+)?/)
+    if (numberMatch) {
+      sectionId = numberMatch[0]
+    }
+    
+    // For special formats like T.5.1, AP.1, etc., use the building_code as section_id
+    if (building_code.includes('.') || building_code.startsWith('T.') || building_code.startsWith('AP.') || building_code.startsWith('AN.') || building_code.startsWith('F.')) {
+      sectionId = building_code
+    }
+    
+    const url = `${API_CONFIG.REFERENCE_ENDPOINT}/${building_code}/${sectionId}`
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch reference: ${response.status} ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error('API returned error response')
+      }
+      
+      return data.data as ReferenceContent
+    } catch (error) {
+      console.error('Error fetching reference content:', error)
+      throw error
+    }
   }
 }
 

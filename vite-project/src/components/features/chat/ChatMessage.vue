@@ -33,7 +33,10 @@
 
           <!-- Bot Response Content -->
           <div class="text-slate-700 max-w-full w-full">
-            <MarkdownRenderer :content="message.content" />
+            <MarkdownRendererWithReferences 
+              :content="message.content" 
+              @reference-click="handleReferenceClick"
+            />
             
             <!-- Stop Streaming Button -->
             <div v-if="message.isLoading" class="mt-3">
@@ -87,8 +90,8 @@
 
 <script setup lang="ts">
 import { ThumbsUp, ThumbsDown, Copy, Share2, Square } from 'lucide-vue-next'
-import MarkdownRenderer from './MarkdownRenderer.vue'
-import type { ChatMessage } from '../../../types/chat'
+import MarkdownRendererWithReferences from './MarkdownRendererWithReferences.vue'
+import type { ChatMessage, Reference } from '../../../types/chat'
 
 interface Props {
   message: ChatMessage
@@ -99,6 +102,7 @@ interface Emits {
   (e: 'toggle-thinking', index: number): void
   (e: 'copy-message', text: string): void
   (e: 'cancel-request'): void
+  (e: 'reference-click', reference: Reference): void
 }
 
 const props = defineProps<Props>()
@@ -110,5 +114,9 @@ const toggleThinking = () => {
 
 const copyMessage = async () => {
   emit('copy-message', props.message.content)
+}
+
+const handleReferenceClick = (reference: Reference) => {
+  emit('reference-click', reference)
 }
 </script>

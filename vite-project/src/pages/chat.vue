@@ -8,6 +8,8 @@ import ChatInput from '../components/features/chat/ChatInput.vue'
 import EmptyState from '../components/features/chat/EmptyState.vue'
 import FloatingControls from '../components/features/chat/FloatingControls.vue'
 import LoadingIndicator from '../components/features/chat/LoadingIndicator.vue'
+import ReferenceModal from '../components/features/chat/ReferenceModal.vue'
+import type { Reference } from '../types/chat'
 
 // Use Pinia stores
 const chatStore = useChatStore()
@@ -16,6 +18,10 @@ const uiStore = useUIStore()
 // Template refs
 const chatMessages = ref<HTMLElement | null>(null)
 const chatInput = ref<InstanceType<typeof ChatInput> | null>(null)
+
+// Reference modal state
+const isReferenceModalOpen = ref(false)
+const selectedReference = ref<Reference | null>(null)
 
 // Core functions
 const scrollToBottom = () => {
@@ -94,6 +100,21 @@ const generateQuickQuestion = () => {
   scrollToBottom()
 }
 
+// Reference handling functions
+const handleReferenceClick = (reference: Reference) => {
+  selectedReference.value = reference
+  isReferenceModalOpen.value = true
+}
+
+const closeReferenceModal = () => {
+  isReferenceModalOpen.value = false
+  selectedReference.value = null
+}
+
+const handleReferenceCopyContent = (message: string) => {
+  console.log(message) // You can replace this with a toast notification
+}
+
 // Lifecycle
 onMounted(() => {
   chatStore.initialize()
@@ -136,12 +157,12 @@ onUnmounted(() => {
           <!-- Empty State -->
           <EmptyState 
             v-if="!chatStore.hasUserMessages"
-            :selected-state="chatStore.selectedState"
-            :selected-code="chatStore.selectedCode"
+            :selected-states="chatStore.selectedStates"
+            :selected-codes="chatStore.selectedCodes"
             :selected-project-type="chatStore.selectedProjectType"
             :selected-site-type="chatStore.selectedSiteType"
-            @update:selected-state="chatStore.selectedState = $event"
-            @update:selected-code="chatStore.selectedCode = $event"
+            @update:selected-states="chatStore.selectedStates = $event"
+            @update:selected-codes="chatStore.selectedCodes = $event"
             @update:selected-project-type="chatStore.selectedProjectType = $event"
             @update:selected-site-type="chatStore.selectedSiteType = $event"
             @generate-quick-question="generateQuickQuestion"
@@ -156,6 +177,7 @@ onUnmounted(() => {
             @toggle-thinking="toggleThinking"
             @copy-message="copyMessage"
             @cancel-request="chatStore.cancelRequest"
+            @reference-click="handleReferenceClick"
           />
           
           <!-- Loading Indicator -->
@@ -178,5 +200,13 @@ onUnmounted(() => {
         @cancel-request="chatStore.cancelRequest"
       />
     </div>
+
+    <!-- Reference Modal -->
+    <ReferenceModal
+      :is-open="isReferenceModalOpen"
+      :reference="selectedReference"
+      @close="closeReferenceModal"
+      @copy-content="handleReferenceCopyContent"
+    />
   </div>
 </template>
