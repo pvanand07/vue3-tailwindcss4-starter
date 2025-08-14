@@ -24,12 +24,14 @@ export interface Chat {
 }
 
 export interface Reference {
-  floats_block: string
+  id_block: string
   building_code: string
   start: number
   end: number
   original_text: string
 }
+
+export type ReferenceMap = Record<string, Reference[]>
 
 export interface ReferenceContent {
   document_id: string

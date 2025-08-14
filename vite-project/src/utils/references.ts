@@ -5,8 +5,7 @@ import type { Reference } from '../types/chat'
  */
 export class ReferenceParser {
   private static readonly buildingCodes = 'CRZ|KMMBL|KMBR|KPBR|BMPB'
-  private static readonly extras = 'T\\.\\d+(?:\\.\\d+)*|AP\\.\\d+(?:\\.\\d+)*(?:\\.[A-Z]+)?|AN\\.[A-Z]+|F\\.\\d+'
-  
+
   // Updated pattern to use a non-capturing group for the building code
   private static readonly pattern = new RegExp(
     `((?:\\[[^\\]]+\\])+)\\[(?:${ReferenceParser.buildingCodes})\\]`,
@@ -26,24 +25,24 @@ export class ReferenceParser {
     this.pattern.lastIndex = 0
 
     while ((match = this.pattern.exec(text)) !== null) {
-      const [originalText, floatsBlocks] = match
+      const [originalText, contentBlocks] = match
       const buildingCodeMatch = originalText.match(/\[([A-Z]+)\]$/)
       const buildingCode = buildingCodeMatch ? buildingCodeMatch[1] : ''
       
-      const individualFloats = floatsBlocks.match(/\[([^\]]+)\]/g) || []
+      const individualItems = contentBlocks.match(/\[([^\]]+)\]/g) || []
 
-      if (individualFloats.length > 0) {
+      if (individualItems.length > 0) {
         let currentPos = match.index
-        individualFloats.forEach((floatText) => {
-          const floatContent = floatText.slice(1, -1)
+        individualItems.forEach((itemText) => {
+          const itemContent = itemText.slice(1, -1)
           matches.push({
-            floats_block: floatContent.trim(),
+            id_block: itemContent.trim(),
             building_code: buildingCode,
             start: currentPos,
-            end: currentPos + floatText.length,
-            original_text: floatText
+            end: currentPos + itemText.length,
+            original_text: itemText
           })
-          currentPos += floatText.length
+          currentPos += itemText.length
         })
       }
     }
@@ -71,11 +70,11 @@ export class ReferenceParser {
           replacementHtml += `<span
             class="reference-link cursor-pointer inline-flex items-center justify-center px-2 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded text-blue-700 text-xs font-medium transition-colors duration-150"
             data-reference-index="${index}"
-            data-floats-block="${ref.floats_block}"
+            data-id-block="${ref.id_block}"
             data-building-code="${buildingCode}"
-            title="${ref.floats_block}"
+            title="${ref.id_block}"
           >
-            ${ref.floats_block}
+            ${ref.id_block}
           </span>`
         })
         processedText = processedText.replace(fullMatch, replacementHtml)
@@ -91,15 +90,15 @@ export class ReferenceParser {
    * @returns Reference object or null if invalid
    */
   static extractReferenceFromElement(element: HTMLElement): Reference | null {
-    const floatsBlock = element.getAttribute('data-floats-block')
+    const idBlock = element.getAttribute('data-id-block')
     const buildingCode = element.getAttribute('data-building-code')
     
-    if (!floatsBlock || !buildingCode) {
+    if (!idBlock || !buildingCode) {
       return null
     }
 
     return {
-      floats_block: floatsBlock,
+      id_block: idBlock,
       building_code: buildingCode,
       start: 0,
       end: 0,

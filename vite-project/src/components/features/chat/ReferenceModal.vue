@@ -18,7 +18,7 @@
             <h2 v-if="content" class="text-lg font-semibold text-gray-900">{{ content.section_info.title }}</h2>
             <h2 v-else class="text-lg font-semibold text-gray-900">Reference Details</h2>
             <p v-if="reference" class="text-xs text-gray-500">
-              {{ reference.building_code }} - {{ reference.floats_block }}
+              {{ reference.building_code }} - {{ reference.id_block }}
             </p>
           </div>
         </div>

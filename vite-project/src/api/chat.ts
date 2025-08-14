@@ -169,25 +169,13 @@ export class ChatAPI {
    * Fetch reference content from the API
    */
   async fetchReferenceContent(reference: Reference): Promise<ReferenceContent> {
-    const { building_code, floats_block } = reference
+    const { building_code, id_block } = reference
     
-    // Extract the first reference ID from floats_block
-    // floats_block contains things like "3.24,3.1" or "Section 3.24"
-    // We want to extract the first number (e.g., "3.24")
-    let sectionId = building_code // fallback
+    // Extract the first reference ID from content
+    // content contains things like "3.24,3.1" or "Section 3.24"
+    const referenceId = id_block.trim()
     
-    // Parse the first number from floats_block
-    const numberMatch = floats_block.match(/\d+(?:\.\d+)?/)
-    if (numberMatch) {
-      sectionId = numberMatch[0]
-    }
-    
-    // For special formats like T.5.1, AP.1, etc., use the building_code as section_id
-    if (building_code.includes('.') || building_code.startsWith('T.') || building_code.startsWith('AP.') || building_code.startsWith('AN.') || building_code.startsWith('F.')) {
-      sectionId = building_code
-    }
-    
-    const url = `${API_CONFIG.REFERENCE_ENDPOINT}/${building_code}/${sectionId}`
+    const url = `${API_CONFIG.REFERENCE_ENDPOINT}/${building_code}/${referenceId}`
     
     try {
       const response = await fetch(url, {
