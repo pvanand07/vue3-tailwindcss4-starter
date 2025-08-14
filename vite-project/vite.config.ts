@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
   proxy: {
     '/api/v1/chat': {
-      target: 'http://localhost:8000',
+      target: 'https://api4iresearcher-v5.elevatics.site',
       changeOrigin: true,
       configure: (proxy, _options) => {
         proxy.on('proxyReq', (proxyReq, _req, _res) => {

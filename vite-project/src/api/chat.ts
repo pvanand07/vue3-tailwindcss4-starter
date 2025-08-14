@@ -12,6 +12,7 @@ export interface ChatRequest {
   query: string
   conversation_id: string
   model_id?: string
+  context?: string
 }
 
 export interface ChatStreamEvent {
@@ -147,7 +148,8 @@ export class ChatAPI {
   createRequest(query: string, conversationId: string, modelId?: string): ChatRequest {
     const request: ChatRequest = {
       query,
-      conversation_id: conversationId
+      conversation_id: conversationId,
+      context: 'Include charts in your response using chartjs to better assist the user'
     }
     
     if (modelId) {
