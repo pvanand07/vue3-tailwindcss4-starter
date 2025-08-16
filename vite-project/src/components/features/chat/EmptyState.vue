@@ -111,12 +111,12 @@
            <label class="flex items-center space-x-2 cursor-pointer group relative">
              <input
                type="checkbox"
-               value="bmpb"
-               :checked="selectedCodes.includes('bmpb')"
-               @change="toggleCode('bmpb')"
+               value="bbmp"
+               :checked="selectedCodes.includes('bbmp')"
+               @change="toggleCode('bbmp')"
                class="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 focus:ring-2"
              />
-             <span class="text-sm text-slate-700">BMPB</span>
+             <span class="text-sm text-slate-700">BBMP</span>
              <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
                Bangalore Mahanagara Palike Building Bye-Laws 2003
                <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800"></div>

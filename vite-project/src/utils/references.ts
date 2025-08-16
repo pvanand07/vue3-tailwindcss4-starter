@@ -4,7 +4,7 @@ import type { Reference } from '../types/chat'
  * Utility class for parsing and handling references in LLM messages
  */
 export class ReferenceParser {
-  private static readonly buildingCodes = 'CRZ|KMMBL|KMBR|KPBR|BMPB'
+  private static readonly buildingCodes = 'CRZ|KMMBL|KMBR|KPBR|BBMP'
 
   // Updated pattern to use a non-capturing group for the building code
   private static readonly pattern = new RegExp(
