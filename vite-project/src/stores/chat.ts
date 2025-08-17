@@ -27,6 +27,7 @@ export const useChatStore = defineStore('chat', () => {
   const selectedModel = ref('openai/gpt-4.1-mini')
   const conversationId = ref<string | null>(null)
   const isSaving = ref(false)
+  const userLocation = ref<{ country: string; details: string } | null>(null)
 
   // Computed
   const hasUserMessages = computed(() => {
@@ -69,6 +70,38 @@ export const useChatStore = defineStore('chat', () => {
     chatHistory.value = loaded || []
   }
 
+  // Geolocation
+  const getUserLocation = async () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async position => {
+          const { latitude, longitude } = position.coords
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            )
+            const data = await response.json()
+            if (data.address) {
+              userLocation.value = {
+                country: data.address.country || '',
+                details: `${data.address.city || data.address.town || data.address.village || ''}, ${
+                  data.address.state || ''
+                }`
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching location details:', error)
+          }
+        },
+        error => {
+          console.error('Error getting user location:', error)
+        }
+      )
+    } else {
+      console.error('Geolocation is not supported by this browser.')
+    }
+  }
+
   // Core functions
   const resetConversation = () => {
     conversationId.value = uuidv4()
@@ -83,12 +116,17 @@ export const useChatStore = defineStore('chat', () => {
 
     try {
       abortController.value = new AbortController()
-      
+
+      const locationContext = userLocation.value
+        ? `User is in ${userLocation.value.details}, ${userLocation.value.country}. `
+        : ''
+
       // Create API request
       const request = chatAPI.createRequest(
-        userMessage, 
-        conversationId.value!, 
-        selectedModel.value || undefined
+        userMessage,
+        conversationId.value!,
+        selectedModel.value || undefined,
+        locationContext
       )
 
       // Add assistant message placeholder
@@ -104,9 +142,9 @@ export const useChatStore = defineStore('chat', () => {
         if (!messages.value[assistantIndex].tools) {
           messages.value[assistantIndex].tools = []
         }
-        
+
         messages.value[assistantIndex].tools!.push(toolData)
-        
+
         // Auto-expand thinking section on first tool
         if (messages.value[assistantIndex].tools!.length === 1) {
           messages.value[assistantIndex].thinkingExpanded = true
@@ -138,17 +176,17 @@ export const useChatStore = defineStore('chat', () => {
         onChunk,
         abortController.value.signal
       )
-      
+
       messages.value[assistantIndex].isLoading = false
-      
+
       // Generate title if this is the first user message
       if (!currentChatTitle.value && messages.value.filter(m => m.role === 'user').length === 1) {
         currentChatTitle.value = generateChatTitle()
       }
-      
+
       // Auto-save after response is complete
       await saveCurrentChat()
-      
+
     } catch (error: any) {
       if (error.name === 'AbortError') {
         console.warn('Request aborted')
@@ -208,9 +246,9 @@ export const useChatStore = defineStore('chat', () => {
     if (!currentChatId.value || messages.value.length === 0 || isSaving.value) {
       return
     }
-    
+
     isSaving.value = true
-    
+
     try {
       const chatIndex = chatHistory.value.findIndex(chat => chat._id === currentChatId.value)
       const chatData: Chat = {
@@ -288,7 +326,7 @@ export const useChatStore = defineStore('chat', () => {
       charts: message.charts || [],
       thinkingExpanded: message.thinkingExpanded || false
     }
-    
+
     messages.value.push(newMessage)
 
     // Generate title if this is the first user message
@@ -329,6 +367,7 @@ export const useChatStore = defineStore('chat', () => {
   // Initialize
   const initialize = () => {
     loadFromStorage()
+    getUserLocation()
     if (chatHistory.value.length === 0) {
       // Add sample chats for UI testing
       chatHistory.value = [
@@ -336,18 +375,18 @@ export const useChatStore = defineStore('chat', () => {
           _id: 'sample-1',
           title: 'Market Research Analysis',
           messages: [
-            { 
-              id: '1', 
-              role: 'user', 
+            {
+              id: '1',
+              role: 'user',
               content: 'What are the current trends in renewable energy markets?',
               timestamp: new Date(Date.now() - 60000).toISOString(),
               tools: [],
               charts: [],
               thinkingExpanded: false
             },
-            { 
-              id: '2', 
-              role: 'assistant', 
+            {
+              id: '2',
+              role: 'assistant',
               content: 'The renewable energy market is experiencing significant growth with several key trends:\n\n1. Solar energy continues to dominate with decreasing costs\n2. Wind energy adoption is accelerating globally\n3. Energy storage solutions are becoming more affordable\n4. Green hydrogen is emerging as a key technology\n5. Policy support is driving market expansion\n\nThese trends vary by region and are influenced by local policies and market conditions.',
               timestamp: new Date(Date.now() - 30000).toISOString(),
               tools: [],
@@ -363,18 +402,18 @@ export const useChatStore = defineStore('chat', () => {
           _id: 'sample-2',
           title: 'Technology Trends',
           messages: [
-            { 
-              id: '3', 
-              role: 'user', 
+            {
+              id: '3',
+              role: 'user',
               content: 'What are the emerging technologies in artificial intelligence?',
               timestamp: new Date(Date.now() - 3600000).toISOString(),
               tools: [],
               charts: [],
               thinkingExpanded: false
             },
-            { 
-              id: '4', 
-              role: 'assistant', 
+            {
+              id: '4',
+              role: 'assistant',
               content: 'Emerging AI technologies include:\n\n1. Large Language Models (LLMs) with improved reasoning\n2. Multimodal AI systems combining text, image, and audio\n3. Edge AI for real-time processing\n4. AI-powered automation and robotics\n5. Explainable AI for transparency\n6. Federated learning for privacy-preserving AI\n\nThese technologies are rapidly evolving and finding applications across various industries.',
               timestamp: new Date(Date.now() - 3300000).toISOString(),
               tools: [],
@@ -390,18 +429,18 @@ export const useChatStore = defineStore('chat', () => {
           _id: 'sample-3',
           title: 'Data Analysis',
           messages: [
-            { 
-              id: '5', 
-              role: 'user', 
+            {
+              id: '5',
+              role: 'user',
               content: 'How can I analyze customer satisfaction data effectively?',
               timestamp: new Date(Date.now() - 7200000).toISOString(),
               tools: [],
               charts: [],
               thinkingExpanded: false
             },
-            { 
-              id: '6', 
-              role: 'assistant', 
+            {
+              id: '6',
+              role: 'assistant',
               content: 'Effective customer satisfaction analysis involves:\n\n1. Collecting data through surveys, reviews, and feedback\n2. Using sentiment analysis to understand emotions\n3. Creating visualizations to identify patterns\n4. Segmenting customers by demographics or behavior\n5. Tracking satisfaction trends over time\n6. Correlating satisfaction with business metrics\n\nThis approach helps identify areas for improvement and measure the impact of changes.',
               timestamp: new Date(Date.now() - 7000000).toISOString(),
               tools: [],
@@ -433,6 +472,7 @@ export const useChatStore = defineStore('chat', () => {
     selectedModel,
     conversationId,
     isSaving,
+    userLocation,
 
     // Computed
     hasUserMessages,

@@ -145,13 +145,21 @@ export class ChatAPI {
   /**
    * Prepare API request object
    */
-  createRequest(query: string, conversationId: string, modelId?: string): ChatRequest {
+  createRequest(
+    query: string,
+    conversationId: string,
+    modelId?: string,
+    locationContext?: string
+  ): ChatRequest {
+    const baseContext = 'Include charts in your response using chartjs to better assist the user'
+    const context = locationContext ? `${locationContext}${baseContext}` : baseContext
+
     const request: ChatRequest = {
       query,
       conversation_id: conversationId,
-      context: 'Include charts in your response using chartjs to better assist the user'
+      context
     }
-    
+
     if (modelId) {
       request.model_id = modelId
     }
