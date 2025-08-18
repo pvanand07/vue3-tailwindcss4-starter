@@ -1,4 +1,5 @@
 export default async function handler(req, res) {
+  console.log(`[${new Date().toISOString()}] Received request: ${req.method} ${req.url}`);
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -11,6 +12,7 @@ export default async function handler(req, res) {
 
   // Only allow POST requests
   if (req.method !== 'POST') {
+    console.warn(`[${new Date().toISOString()}] Method not allowed: ${req.method}`);
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
@@ -19,7 +21,7 @@ export default async function handler(req, res) {
     console.log('Request body:', req.body);
 
     // Forward the request to the external API
-    const response = await fetch('https://api4iresearcher-v5.elevatics.site', {
+    const response = await fetch('https://api4iresearcher-v5.elevatics.site/api/v1/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
