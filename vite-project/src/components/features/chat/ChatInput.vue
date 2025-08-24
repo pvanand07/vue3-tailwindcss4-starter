@@ -63,6 +63,7 @@
                   <option value="qwen/qwen3-coder:floor">Qwen3 Coder</option>
                   <option value="z-ai/glm-4.5">GLM 4.5</option>
                   <option value="x-ai/grok-3-mini">Grok 3 Mini</option>
+                  <option value="openai/gpt-oss-120b:nitro">GPT-OSS 120B</option>
                 </select>
               </div>
               
