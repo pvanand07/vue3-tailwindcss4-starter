@@ -166,7 +166,7 @@
     <!-- Quick Start Button -->
     <button 
       @click="$emit('generate-quick-question')"
-      class="mt-6 bg-gray-900 text-white px-6 py-2 rounded-full hover:bg-gray-800 transition-colors flex items-center gap-2 font-medium text-sm"
+      class="mt-6 bg-gray-900/90 backdrop-blur-sm text-white px-6 py-2 rounded-full hover:bg-gray-800/95 hover:scale-105 transition-all duration-300 flex items-center gap-2 font-medium text-sm shadow-lg hover:shadow-xl border border-gray-700/30 transform-gpu"
       aria-label="Generate sample question based on selections"
     >
       <Search class="w-4 h-4" />
