@@ -94,7 +94,11 @@
             <h1 class="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight tracking-tight text-gray-900">
               Introducing D Code
             </h1>
-            <p class="text-base xs:text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto px-2">
+            <p class="text-base xs:text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto px-2 flex items-center justify-center gap-2 flex-wrap">
+              <span class="flex items-center gap-1.5">
+                <Map class="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 text-gray-700" />
+                <span class="font-semibold text-gray-900">India's First</span>
+              </span>
               AI Building Code Assistant
             </p>
           </div>
@@ -107,24 +111,18 @@
               Get Started
               <ArrowRight class="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
             </button>
-            <button class="w-full xs:w-auto border border-gray-300 px-4 xs:px-6 sm:px-8 py-2.5 xs:py-3 rounded-full text-sm xs:text-base sm:text-lg font-medium text-gray-900 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-              Try for Work
+            <button 
+              @click="$emit('getStarted')"
+              class="w-full xs:w-auto border border-gray-300 px-4 xs:px-6 sm:px-8 py-2.5 xs:py-3 rounded-full text-sm xs:text-base sm:text-lg font-medium text-gray-900 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+              Learn More
               <ArrowRight class="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
-          <div class="flex flex-col xs:flex-row items-center justify-center space-y-1 xs:space-y-0 xs:space-x-4 sm:space-x-8 text-xs text-gray-600">
+          <div class="flex items-center justify-center">
             <div class="flex items-center space-x-2">
-              <Shield class="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 text-gray-500" />
-              <span>14-day free trial</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <Zap class="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 text-gray-500" />
-              <span>Instant activation</span>
-            </div>
-            <div class="flex items-center space-x-2">
-              <Users class="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 text-gray-500" />
-              <span>Cancel anytime</span>
+              <Shield class="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 text-gray-500" />
+              <span class="text-sm xs:text-base sm:text-lg font-medium text-gray-700">compliance simplified</span>
             </div>
           </div>
         </div>
@@ -198,11 +196,11 @@
     </div>
 
     <!-- Description Section -->
-    <section class="py-12 sm:py-16 bg-white">
-      <div class="max-w-4xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
-        <div class="rounded-xl xs:rounded-2xl p-4 xs:p-6 sm:p-8 border bg-gradient-to-r from-orange-50 to-green-50 border-gray-200 shadow-sm">
-          <p class="text-sm xs:text-base sm:text-lg lg:text-xl leading-relaxed text-gray-700">
-            D Code is an AI-powered compliance assistant trained to understand and reason through the full spectrum of Indian building regulations — including NBC 2016, IS codes, CRZ norms, environmental mandates, and state-specific bylaws like KMBR and KPBR. Built for AEC professionals, D Code engages in natural conversation, answers complex queries, challenges flawed assumptions, and provides context-aware, project-specific guidance across every regulation that governs construction in India.
+    <section class="py-16 sm:py-20 bg-white">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="rounded-xl xs:rounded-2xl p-6 sm:p-8 lg:p-10 border bg-gradient-to-r from-orange-50 to-green-50 border-gray-200 shadow-sm">
+          <p class="text-base sm:text-lg lg:text-xl leading-8 sm:leading-9 lg:leading-10 text-gray-700 text-center">
+            <strong>D Code</strong> is an AI-powered compliance platform that provides grounded responses referring national building regulations, environmental mandates, and local bylaws. D Code provides project-specific guidance to help AEC professionals navigate complex regulatory requirements with <strong>clarity and precision</strong>.
           </p>
         </div>
       </div>
@@ -330,7 +328,7 @@
             </div>
             <div class="flex items-center space-x-2 text-gray-600">
               <CheckCircle class="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5 text-gray-600" />
-              <span class="text-xs xs:text-sm sm:text-base">Cancel anytime</span>
+              <span class="text-xs xs:text-sm sm:text-base">compliance simplified</span>
             </div>
           </div>
         </div>
