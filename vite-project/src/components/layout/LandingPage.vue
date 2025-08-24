@@ -86,8 +86,10 @@
     <section class="relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-green-50">
       <div class="max-w-4xl mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-8 xs:py-12 sm:py-16 lg:py-24 text-center">
         <div class="space-y-4 xs:space-y-6 sm:space-y-8">
-          <div class="inline-flex items-center px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2 bg-gray-100 text-gray-800 rounded-full text-xs font-medium mb-3 xs:mb-4 sm:mb-6">
-            <span>July 30, 2025 Product</span>
+          <div class="inline-flex items-center mb-3 xs:mb-4 sm:mb-6">
+            <div class="w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 bg-gray-900 rounded-xl overflow-hidden">
+              <img src="/src/assets/images/d-code.png" alt="D Code Logo" class="w-full h-full object-cover" />
+            </div>
           </div>
           
           <div class="space-y-2 xs:space-y-3 sm:space-y-4">
