@@ -23,11 +23,12 @@
         </div>
         <div class="flex items-center space-x-2">
           <button
-            @click="router.push('/chat')"
+            @click="showUploadModal = true"
             class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            :disabled="!chatStore.userId"
           >
-            <MessageCircle class="w-4 h-4 mr-2" />
-            New Chat
+            <Upload class="w-4 h-4 mr-2" />
+            Upload PDF
           </button>
         </div>
       </div>
@@ -45,14 +46,6 @@
                 <h3 class="text-sm font-medium text-yellow-800">User ID Required</h3>
                 <div class="mt-2 text-sm text-yellow-700">
                   <p>Please set your User ID to access your documents. You can set it in the sidebar.</p>
-                </div>
-                <div class="mt-4">
-                  <button
-                    @click="openSidebarToSetUserId"
-                    class="bg-yellow-100 px-3 py-2 rounded-md text-sm font-medium text-yellow-800 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                  >
-                    Set User ID
-                  </button>
                 </div>
               </div>
             </div>
@@ -120,6 +113,13 @@
           key="document-modal"
         />
 
+        <!-- Document Upload Modal -->
+        <DocumentUploadModal 
+          :is-visible="showUploadModal"
+          @close="showUploadModal = false"
+          @upload-success="handleUploadSuccess"
+        />
+
         <!-- Floating Controls -->
         <FloatingControls 
           :sidebar-open="isSidebarOpen"
@@ -143,7 +143,8 @@ import {
   MessageCircle, 
   FileText, 
   AlertCircle,
-  Menu
+  Menu,
+  Upload
 } from 'lucide-vue-next'
 import ChatSidebar from '../components/layout/ChatSidebar.vue'
 
@@ -151,6 +152,7 @@ import FloatingControls from '../components/features/chat/FloatingControls.vue'
 import DocumentFilters from '../components/features/dashboard/DocumentFilters.vue'
 import DocumentGrid from '../components/features/dashboard/DocumentGrid.vue'
 import DocumentDetailModal from '../components/features/dashboard/DocumentDetailModal.vue'
+import DocumentUploadModal from '../components/features/dashboard/DocumentUploadModal.vue'
 
 const documentStore = useDocumentStore()
 const chatStore = useChatStore()
@@ -158,6 +160,7 @@ const router = useRouter()
 
 // Local state
 const isSidebarOpen = ref(false)
+const showUploadModal = ref(false)
 
 // Reactive properties (maintain reactivity)
 const { 
@@ -183,10 +186,7 @@ const retryFetch = () => {
   }
 }
 
-// Open sidebar to set user ID
-const openSidebarToSetUserId = () => {
-  isSidebarOpen.value = true
-}
+
 
 // Watch for selectedDocument changes
 watch(selectedDocument, (newDoc) => {
@@ -206,6 +206,14 @@ const handleNewChatFromDocument = () => {
   // Start a new chat and navigate to chat page
   chatStore.startNewChat()
   router.push('/chat')
+}
+
+const handleUploadSuccess = (docId: string) => {
+  console.log('Upload successful, document ID:', docId)
+  // Refresh the documents list
+  if (chatStore.userId) {
+    fetchDocuments(chatStore.userId)
+  }
 }
 
 // Watch for user ID changes
