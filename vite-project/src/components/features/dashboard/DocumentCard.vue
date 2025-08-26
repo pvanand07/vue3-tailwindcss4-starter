@@ -1,32 +1,18 @@
 <template>
   <div 
-    class="bg-white overflow-hidden shadow-sm border rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+    class="bg-white overflow-hidden shadow-sm border rounded-lg hover:shadow-md transition-shadow cursor-pointer max-w-sm"
     @click="$emit('click', document)"
   >
     <div class="p-6">
       <!-- Header -->
       <div class="flex items-start justify-between">
         <div class="flex-1 min-w-0">
-          <h3 class="text-lg font-medium text-gray-900 truncate" :title="document.doc_name">
+          <h3 class="text-lg font-medium text-gray-900 line-clamp-2" :title="document.doc_name">
             {{ document.doc_name }}
           </h3>
           <div class="mt-1 flex items-center space-x-2">
-            <span 
-              :class="[
-                'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
-                document.created_by === 'assistant' 
-                  ? 'bg-blue-100 text-blue-800' 
-                  : 'bg-green-100 text-green-800'
-              ]"
-            >
-              <component 
-                :is="document.created_by === 'assistant' ? Bot : Upload" 
-                class="w-3 h-3 mr-1" 
-              />
-              {{ document.created_by === 'assistant' ? 'AI Generated' : 'Uploaded' }}
-            </span>
             <span class="text-xs text-gray-500">
-              {{ document.page_range }} page{{ document.page_range.includes('-') ? 's' : '' }}
+              {{ getPageDisplay(document.page_range) }}
             </span>
           </div>
         </div>
@@ -42,7 +28,7 @@
       <div class="mt-4">
         <p 
           v-if="document.summary" 
-          class="text-sm text-gray-600 line-clamp-3"
+          class="text-sm text-gray-600 line-clamp-4"
           :title="document.summary"
         >
           {{ document.summary }}
@@ -50,33 +36,6 @@
         <p v-else class="text-sm text-gray-400 italic">
           No summary available
         </p>
-      </div>
-
-      <!-- Applicability -->
-      <div v-if="document.applicability" class="mt-3">
-        <p class="text-sm text-gray-700 line-clamp-2" :title="document.applicability">
-          <span class="font-medium">Use case:</span> {{ document.applicability }}
-        </p>
-      </div>
-
-      <!-- Tags -->
-      <div v-if="document.tags.length > 0" class="mt-4">
-        <div class="flex flex-wrap gap-1">
-          <span
-            v-for="tag in document.tags.slice(0, 3)"
-            :key="tag"
-            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700"
-          >
-            <Hash class="w-3 h-3 mr-1" />
-            {{ tag }}
-          </span>
-          <span
-            v-if="document.tags.length > 3"
-            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-200 text-gray-600"
-          >
-            +{{ document.tags.length - 3 }} more
-          </span>
-        </div>
       </div>
 
       <!-- Footer -->
@@ -118,9 +77,6 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue'
 import { 
-  Bot, 
-  Upload, 
-  Hash, 
   Calendar, 
   Star, 
   Share2, 
@@ -141,6 +97,18 @@ defineEmits<{
   download: [document: Document]
   delete: [document: Document]
 }>()
+
+// Function to format page display
+const getPageDisplay = (pageRange: string) => {
+  if (pageRange.includes('-')) {
+    const [start, end] = pageRange.split('-').map(Number)
+    if (start === end) {
+      return `${start} page`
+    }
+    return `${end - start + 1} pages`
+  }
+  return `${pageRange} page`
+}
 </script>
 
 <style scoped>
@@ -154,6 +122,13 @@ defineEmits<{
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

@@ -119,3 +119,14 @@ export class TextUtils {
       .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
   }
 }
+
+/**
+ * Sanitize user ID by converting spaces to underscores and keeping only alphanumeric characters
+ */
+export const sanitizeUserId = (userId: string): string => {
+  return userId
+    .trim()
+    .replace(/\s+/g, '_') // Convert spaces to underscores
+    .replace(/[^a-zA-Z0-9_]/g, '') // Keep only alphanumeric and underscores
+    .toLowerCase() // Convert to lowercase for consistency
+}

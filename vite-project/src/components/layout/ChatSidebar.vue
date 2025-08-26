@@ -108,17 +108,67 @@
 
     <!-- Sidebar Footer -->
     <div class="p-4 border-t border-slate-600">
-      <div class="flex justify-center items-center text-xs text-slate-400">
-        <span>{{ chatStore.chatHistory.length }} conversation{{ chatStore.chatHistory.length !== 1 ? 's' : '' }}</span>
+      <div class="flex flex-col items-center space-y-2">
+        <!-- User ID Display/Edit -->
+        <div class="w-full">
+          <div v-if="!isEditingUserId" class="flex items-center justify-center">
+            <span v-if="userId" class="text-sm text-slate-300 font-mono">
+              {{ userId }}
+            </span>
+            <span v-else class="text-xs text-slate-400">
+              User ID not set
+            </span>
+            <button 
+              @click="startEditingUserId"
+              class="ml-2 p-1 hover:bg-slate-600 rounded text-slate-400 hover:text-white transition-colors"
+              aria-label="Edit user ID"
+            >
+              <Edit2 class="w-3 h-3" />
+            </button>
+          </div>
+          
+          <!-- User ID Edit Form -->
+          <div v-else class="flex items-center space-x-2">
+            <input
+              v-model="editingUserId"
+              @keyup.enter="saveUserId"
+              @keyup.esc="cancelEditingUserId"
+              type="text"
+              placeholder="Enter user ID"
+              class="flex-1 px-2 py-1 text-sm bg-slate-700 border border-slate-500 rounded text-white placeholder-slate-400 focus:outline-none focus:border-blue-400"
+              ref="userIdInput"
+            />
+            <button 
+              @click="saveUserId"
+              class="p-1 bg-green-600 hover:bg-green-700 rounded text-white transition-colors"
+              aria-label="Save user ID"
+            >
+              <Check class="w-3 h-3" />
+            </button>
+            <button 
+              @click="cancelEditingUserId"
+              class="p-1 bg-slate-600 hover:bg-slate-700 rounded text-slate-300 hover:text-white transition-colors"
+              aria-label="Cancel editing"
+            >
+              <X class="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+        
+        <!-- Conversation Count -->
+        <div class="text-xs text-slate-400">
+          <span>{{ chatStore.chatHistory.length }} conversation{{ chatStore.chatHistory.length !== 1 ? 's' : '' }}</span>
+        </div>
       </div>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { Plus, X, MoreHorizontal, Edit2, Trash2, MessageCircle, FileText } from 'lucide-vue-next'
+import { ref, onMounted, nextTick } from 'vue'
+import { Plus, X, MoreHorizontal, Edit2, Trash2, MessageCircle, FileText, Check } from 'lucide-vue-next'
 import { useChatStore } from '../../stores/chat'
+import { sanitizeUserId } from '../../utils/text'
 import type { Chat } from '../../types/chat'
 
 interface Props {
@@ -138,6 +188,10 @@ const chatStore = useChatStore()
 
 // Local state
 const openDropdownId = ref<string | null>(null)
+const isEditingUserId = ref(false)
+const userId = ref<string | null>(null)
+const editingUserId = ref<string | null>(null)
+const userIdInput = ref<HTMLInputElement | null>(null)
 
 // Handlers
 const handleNewChat = () => {
@@ -181,12 +235,37 @@ const handleDeleteChat = (chatId: string) => {
   chatStore.deleteChat(chatId)
 }
 
+const startEditingUserId = () => {
+  isEditingUserId.value = true
+  editingUserId.value = userId.value || ''
+  nextTick(() => {
+    userIdInput.value?.focus()
+  })
+}
+
+const saveUserId = () => {
+  if (editingUserId.value) {
+    const sanitized = sanitizeUserId(editingUserId.value)
+    userId.value = sanitized
+    isEditingUserId.value = false
+    chatStore.setUserId(sanitized)
+  }
+}
+
+const cancelEditingUserId = () => {
+  isEditingUserId.value = false
+  editingUserId.value = userId.value || ''
+}
+
 // Lifecycle
 onMounted(() => {
   // Close dropdown on outside click
   document.addEventListener('click', () => {
     openDropdownId.value = null
   })
+
+  // Set initial user ID from store
+  userId.value = chatStore.userId
 })
 </script>
 

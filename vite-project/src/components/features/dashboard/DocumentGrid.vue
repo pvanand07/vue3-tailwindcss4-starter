@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
     <DocumentCard 
       v-for="document in documents" 
       :key="document.doc_id"
@@ -23,10 +23,7 @@ const documentStore = useDocumentStore()
 
 const openDocument = async (document: Document) => {
   try {
-    console.log('Opening document:', document.doc_name, document.doc_id)
-    console.log('Fetching detail for user:', document.user_id, 'doc:', document.doc_id)
     await documentStore.fetchDocumentDetail(document.user_id, document.doc_id)
-    console.log('Document detail fetched successfully')
   } catch (error) {
     console.error('Error opening document:', error)
   }

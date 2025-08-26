@@ -14,7 +14,7 @@
           'inline-block align-middle bg-white text-left overflow-hidden shadow-xl transform transition-all z-[9999] relative',
           isFullscreen 
             ? 'fixed inset-2 w-auto h-auto max-w-none max-h-none rounded-none' 
-            : 'rounded-lg my-2 md:my-4 max-w-6xl w-full mx-2 md:mx-4 max-h-[98vh]'
+            : 'rounded-lg my-2 md:my-4 max-w-6xl w-full mx-2 md:mx-4 h-[98vh]'
         ]"
       >
         <!-- Header -->
@@ -47,7 +47,11 @@
                 </span>
               </div>
             </div>
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-4">
+              <!-- Page Count Display -->
+              <div class="text-sm text-gray-500">
+                {{ Object.keys(document.pages).length }} page{{ Object.keys(document.pages).length !== 1 ? 's' : '' }}
+              </div>
               <button
                 @click="toggleFullscreen"
                 class="bg-white rounded-md text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -70,13 +74,13 @@
         <!-- Content -->
         <div 
           :class="[
-            'bg-gray-50 px-2 md:px-6 py-3 md:py-5 overflow-y-auto',
-            isFullscreen ? 'max-h-[calc(100vh-8rem)]' : 'max-h-[85vh]'
+            'bg-gray-50 px-2 md:px-6 py-3 md:py-5 overflow-y-auto flex-1',
+            isFullscreen ? 'h-[calc(100vh-8rem)]' : 'h-[calc(98vh-8rem)]'
           ]"
         >
           <div 
             :class="[
-              'grid gap-3 md:gap-6',
+              'grid gap-3 md:gap-6 h-full',
               isFullscreen ? 'grid-cols-1 xl:grid-cols-5' : 'grid-cols-1 lg:grid-cols-4'
             ]"
           >
@@ -145,44 +149,22 @@
               ]"
             >
               <div class="bg-white rounded-lg shadow-sm">
-                <!-- Page Navigation -->
-                <div v-if="pageNumbers.length > 1" class="border-b border-gray-200 px-6 py-3">
-                  <div class="flex items-center justify-between">
-                    <h4 class="text-lg font-medium text-gray-900">Content</h4>
-                    <div class="flex items-center space-x-2">
-                      <span class="text-sm text-gray-500">Page:</span>
-                      <select
-                        v-model="currentPage"
-                        class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option
-                          v-for="pageNum in pageNumbers"
-                          :key="pageNum"
-                          :value="pageNum"
-                        >
-                          {{ pageNum }}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Page Content -->
+                <!-- Full Document Content -->
                 <div 
                   :class="[
-                    'p-4 md:p-6 overflow-y-auto',
+                    'p-4 md:p-6 overflow-y-auto h-full',
                     isFullscreen 
-                      ? 'max-h-[calc(100vh-12rem)]' 
-                      : 'max-h-[60vh] md:max-h-[70vh]'
+                      ? 'h-[calc(100vh-12rem)]' 
+                      : 'h-[calc(98vh-12rem)]'
                   ]"
                 >
                   <div 
-                    v-if="currentPageContent"
+                    v-if="fullDocumentContent"
                     class="prose prose-sm lg:prose-base max-w-none leading-relaxed"
-                    v-html="renderedContent"
+                    v-html="renderedFullContent"
                   ></div>
                   <div v-else class="text-gray-500 italic">
-                    No content available for this page.
+                    No content available for this document.
                   </div>
                 </div>
               </div>
@@ -209,36 +191,36 @@ defineEmits<{
   close: []
 }>()
 
-// Debug logging
-console.log('DocumentDetailModal mounted with document:', props.document)
+// Document detail modal component
 
 // Initialize markdown parser
 const md = new MarkdownIt()
-
-// Current page state
-const currentPage = ref('1')
 
 // Fullscreen state
 const isFullscreen = ref(false)
 
 // Computed properties
-const pageNumbers = computed(() => {
-  return Object.keys(props.document.pages).sort((a, b) => parseInt(a) - parseInt(b))
+const fullDocumentContent = computed(() => {
+  // Combine all pages into one continuous document
+  const allPages = Object.keys(props.document.pages)
+    .sort((a, b) => parseInt(a) - parseInt(b))
+    .map(pageNum => {
+      const pageContent = props.document.pages[pageNum]
+      // Add page separator if multiple pages
+      if (Object.keys(props.document.pages).length > 1) {
+        return `\n\n---\n\n**Page ${pageNum}**\n\n${pageContent}`
+      }
+      return pageContent
+    })
+    .join('\n\n')
+  
+  return allPages
 })
 
-const currentPageContent = computed(() => {
-  return props.document.pages[currentPage.value] || ''
+const renderedFullContent = computed(() => {
+  if (!fullDocumentContent.value) return ''
+  return md.render(fullDocumentContent.value)
 })
-
-const renderedContent = computed(() => {
-  if (!currentPageContent.value) return ''
-  return md.render(currentPageContent.value)
-})
-
-// Initialize current page
-if (pageNumbers.value.length > 0) {
-  currentPage.value = pageNumbers.value[0]
-}
 
 // Methods
 const toggleFullscreen = () => {
@@ -263,12 +245,15 @@ const downloadDocument = () => {
   
   fullContent += `## Content\n\n`
   
-  pageNumbers.value.forEach((pageNum) => {
-    if (pageNumbers.value.length > 1) {
-      fullContent += `### Page ${pageNum}\n\n`
-    }
-    fullContent += props.document.pages[pageNum] + '\n\n'
-  })
+  // Add all pages content
+  Object.keys(props.document.pages)
+    .sort((a, b) => parseInt(a) - parseInt(b))
+    .forEach((pageNum) => {
+      if (Object.keys(props.document.pages).length > 1) {
+        fullContent += `### Page ${pageNum}\n\n`
+      }
+      fullContent += props.document.pages[pageNum] + '\n\n'
+    })
   
   // Create and trigger download
   const blob = new Blob([fullContent], { type: 'text/markdown' })

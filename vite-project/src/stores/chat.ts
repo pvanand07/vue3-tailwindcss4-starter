@@ -28,6 +28,7 @@ export const useChatStore = defineStore('chat', () => {
   const conversationId = ref<string | null>(null)
   const isSaving = ref(false)
   const userLocation = ref<{ country: string; details: string } | null>(null)
+  const userId = ref<string | null>(null)
 
   // Computed
   const hasUserMessages = computed(() => {
@@ -68,6 +69,22 @@ export const useChatStore = defineStore('chat', () => {
   const loadFromStorage = () => {
     const loaded = ChatStorage.loadChatHistory([])
     chatHistory.value = loaded || []
+  }
+
+  // User ID management
+  const setUserId = (newUserId: string) => {
+    userId.value = newUserId
+    ChatStorage.saveUserPreferences({ userId: newUserId })
+  }
+
+  const loadUserId = () => {
+    const preferences = ChatStorage.loadUserPreferences({})
+    userId.value = preferences.userId || null
+  }
+
+  // Model management
+  const setSelectedModel = (model: string) => {
+    selectedModel.value = model
   }
 
   // Geolocation
@@ -367,6 +384,7 @@ export const useChatStore = defineStore('chat', () => {
   // Initialize
   const initialize = () => {
     loadFromStorage()
+    loadUserId()
     getUserLocation()
     if (chatHistory.value.length === 0) {
       // Add sample chats for UI testing
@@ -473,6 +491,7 @@ export const useChatStore = defineStore('chat', () => {
     conversationId,
     isSaving,
     userLocation,
+    userId,
 
     // Computed
     hasUserMessages,
@@ -494,6 +513,9 @@ export const useChatStore = defineStore('chat', () => {
     generateQuickQuestion,
     sendMessageToAPI,
     cancelRequest,
-    initialize
+    initialize,
+    setUserId,
+    loadUserId,
+    setSelectedModel
   }
 })

@@ -45,16 +45,18 @@ export const useDocumentStore = defineStore('document', () => {
   })
 
   // Actions
-  async function fetchDocuments(userId: string = 'test_user') {
+  async function fetchDocuments(userId: string) {
+    if (!userId) {
+      error.value = 'User ID is required to fetch documents'
+      return
+    }
+    
     isLoading.value = true
     error.value = null
     
     try {
-      console.log('Fetching documents for user:', userId)
       const userDocuments = await documentAPI.getUserDocuments(userId)
-      console.log('Received documents:', userDocuments)
       documents.value = userDocuments
-      console.log('Documents stored in state:', documents.value)
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to fetch documents'
       console.error('Error fetching documents:', err)
@@ -68,11 +70,8 @@ export const useDocumentStore = defineStore('document', () => {
     error.value = null
     
     try {
-      console.log('Fetching document detail for:', userId, docId)
       const detail = await documentAPI.getDocumentDetail(userId, docId)
-      console.log('Document detail received:', detail)
       selectedDocument.value = detail
-      console.log('Selected document stored:', selectedDocument.value)
       return detail
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to fetch document detail'
