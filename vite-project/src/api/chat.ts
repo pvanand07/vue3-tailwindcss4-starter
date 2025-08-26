@@ -150,7 +150,8 @@ export class ChatAPI {
     query: string,
     conversationId: string,
     modelId?: string,
-    locationContext?: string
+    locationContext?: string,
+    userId?: string
   ): ChatRequest {
     const baseContext = 'Include charts in your response using chartjs to better assist the user'
     const context = locationContext ? `${locationContext}${baseContext}` : baseContext
@@ -159,7 +160,7 @@ export class ChatAPI {
       query,
       conversation_id: conversationId,
       context,
-      user_id: 'test_user'
+      user_id: userId || 'anonymous'
     }
 
     if (modelId) {

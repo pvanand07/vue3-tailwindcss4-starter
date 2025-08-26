@@ -143,7 +143,8 @@ export const useChatStore = defineStore('chat', () => {
         userMessage,
         conversationId.value!,
         selectedModel.value || undefined,
-        locationContext
+        locationContext,
+        userId.value || undefined
       )
 
       // Add assistant message placeholder
