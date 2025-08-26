@@ -88,3 +88,10 @@ export class DateUtils {
     return DateUtils.formatRelative(dateString)
   }
 }
+
+/**
+ * Simple date formatting function for components
+ */
+export function formatDate(dateString: string): string {
+  return DateUtils.formatRelative(dateString)
+}

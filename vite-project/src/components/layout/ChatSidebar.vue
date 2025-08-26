@@ -22,14 +22,24 @@
           <X class="w-5 h-5" />
         </button>
       </div>
-      <button 
-        @click="handleNewChat"
-        class="w-full bg-slate-600 text-white py-2 px-4 rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-2"
-        aria-label="Start new chat"
-      >
-        <Plus class="w-4 h-4" />
-        New Chat
-      </button>
+      <div class="space-y-2">
+        <button 
+          @click="handleNewChat"
+          class="w-full bg-slate-600 text-white py-2 px-4 rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-2"
+          aria-label="Start new chat"
+        >
+          <Plus class="w-4 h-4" />
+          New Chat
+        </button>
+        <router-link
+          to="/dashboard"
+          class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          @click="$emit('close')"
+        >
+          <FileText class="w-4 h-4" />
+          Dashboard
+        </router-link>
+      </div>
     </div>
 
     <!-- History List -->
@@ -107,7 +117,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Plus, X, MoreHorizontal, Edit2, Trash2, MessageCircle } from 'lucide-vue-next'
+import { Plus, X, MoreHorizontal, Edit2, Trash2, MessageCircle, FileText } from 'lucide-vue-next'
 import { useChatStore } from '../../stores/chat'
 import type { Chat } from '../../types/chat'
 

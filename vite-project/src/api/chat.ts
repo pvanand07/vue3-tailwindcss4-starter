@@ -13,6 +13,7 @@ export interface ChatRequest {
   conversation_id: string
   model_id?: string
   context?: string
+  user_id?: string
 }
 
 export interface ChatStreamEvent {
@@ -157,7 +158,8 @@ export class ChatAPI {
     const request: ChatRequest = {
       query,
       conversation_id: conversationId,
-      context
+      context,
+      user_id: 'test_user'
     }
 
     if (modelId) {
