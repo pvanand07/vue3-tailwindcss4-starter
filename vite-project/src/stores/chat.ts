@@ -126,7 +126,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   // API Functions
-  const sendMessageToAPI = async (userMessage: string) => {
+  const sendMessageToAPI = async (userMessage: string, imageData?: string) => {
     if (!conversationId.value) {
       resetConversation()
     }
@@ -144,7 +144,8 @@ export const useChatStore = defineStore('chat', () => {
         conversationId.value!,
         selectedModel.value || undefined,
         locationContext,
-        userId.value || undefined
+        userId.value || undefined,
+        imageData
       )
 
       // Add assistant message placeholder
@@ -256,7 +257,9 @@ export const useChatStore = defineStore('chat', () => {
       isLoading: false,
       tools: msg.tools || [],
       charts: msg.charts || [],
-      thinkingExpanded: msg.thinkingExpanded || false
+      thinkingExpanded: msg.thinkingExpanded || false,
+      ...(msg.imageData && { imageData: msg.imageData }),
+      ...(msg.imageType && { imageType: msg.imageType })
     }))
   }
 
@@ -279,7 +282,9 @@ export const useChatStore = defineStore('chat', () => {
           tools: msg.tools || [],
           charts: msg.charts || [],
           thinkingExpanded: msg.thinkingExpanded || false,
-          timestamp: msg.timestamp || new Date().toISOString()
+          timestamp: msg.timestamp || new Date().toISOString(),
+          ...(msg.imageData && { imageData: msg.imageData }),
+          ...(msg.imageType && { imageType: msg.imageType })
         })),
         conversationId: conversationId.value || uuidv4(),
         createdAt: chatIndex === -1 ? new Date().toISOString() : chatHistory.value[chatIndex].createdAt,

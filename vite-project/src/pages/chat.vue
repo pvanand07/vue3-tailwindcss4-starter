@@ -56,13 +56,15 @@ const calculateChartOffset = (messageIndex: number): number => {
 }
 
 // Message handling functions
-const handleSendMessage = async (message: string) => {
+const handleSendMessage = async (data: { message: string; imageData?: string; imageType?: string }) => {
   chatStore.errorMessage = ''
   
   // Add user message
   chatStore.addMessage({
     role: 'user',
-    content: message
+    content: data.message,
+    imageData: data.imageData,
+    imageType: data.imageType
   })
 
   chatStore.isTyping = true
@@ -71,7 +73,7 @@ const handleSendMessage = async (message: string) => {
   scrollToBottom()
   
   // Send message to API
-  await chatStore.sendMessageToAPI(message)
+  await chatStore.sendMessageToAPI(data.message, data.imageData)
   scrollToBottom()
 }
 

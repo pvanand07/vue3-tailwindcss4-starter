@@ -14,6 +14,7 @@ export interface ChatRequest {
   model_id?: string
   context?: string
   user_id?: string
+  image_data?: string
 }
 
 export interface ChatStreamEvent {
@@ -151,7 +152,8 @@ export class ChatAPI {
     conversationId: string,
     modelId?: string,
     locationContext?: string,
-    userId?: string
+    userId?: string,
+    imageData?: string
   ): ChatRequest {
     const baseContext = 'Include charts in your response using chartjs to better assist the user'
     const context = locationContext ? `${locationContext}${baseContext}` : baseContext
@@ -165,6 +167,10 @@ export class ChatAPI {
 
     if (modelId) {
       request.model_id = modelId
+    }
+
+    if (imageData) {
+      request.image_data = imageData
     }
 
     return request

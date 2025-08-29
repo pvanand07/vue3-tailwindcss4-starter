@@ -8,6 +8,30 @@
           {{ errorMessage }}
         </div>
         
+        <!-- Attached Image Preview -->
+        <div v-if="attachedImage" class="mb-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
+          <div class="flex items-start gap-3">
+            <div class="relative">
+              <img 
+                :src="attachedImage.preview" 
+                :alt="attachedImage.name"
+                class="w-16 h-16 object-cover rounded-md border border-slate-300"
+              />
+              <button
+                @click="removeAttachedImage"
+                class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                aria-label="Remove image"
+              >
+                ×
+              </button>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-slate-700 truncate">{{ attachedImage.name }}</p>
+              <p class="text-xs text-slate-500">{{ formatFileSize(attachedImage.size) }}</p>
+            </div>
+          </div>
+        </div>
+        
         <form @submit.prevent="handleSendMessage">
           <div>
             <!-- Text Input Container -->
@@ -31,12 +55,20 @@
             
             <!-- Bottom Controls Row -->
             <div class="flex items-center justify-between mt-2">
-              <!-- Left: File Upload, Think, Model -->
+              <!-- Left: Image Upload, Think, Model -->
               <div class="flex items-center gap-2">
-                <button type="button" class="flex items-center gap-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md px-3 py-1.5 flex-shrink-0 transition-colors" aria-label="Upload file">
-                  <input type="file" @change="handleFileUpload" class="hidden" id="file-upload" accept="image/*,.pdf,.txt,.doc,.docx">
-                  <label for="file-upload" class="cursor-pointer flex items-center gap-2">
+                <button type="button" class="flex items-center gap-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md px-3 py-1.5 flex-shrink-0 transition-colors" aria-label="Attach image">
+                  <input 
+                    type="file" 
+                    @change="handleImageUpload" 
+                    class="hidden" 
+                    id="image-upload" 
+                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                    ref="imageInput"
+                  >
+                  <label for="image-upload" class="cursor-pointer flex items-center gap-2">
                     <Plus class="w-4 h-4" />
+                    <span class="hidden sm:inline">Image</span>
                   </label>
                 </button>
                 <button
@@ -69,7 +101,7 @@
               <div class="flex items-center">
                 <button
                   type="submit"
-                  :disabled="(!inputMessage.trim() && !isLoading) || isThinking || inputMessage.length > 4000"
+                  :disabled="(!inputMessage.trim() && !attachedImage && !isLoading) || isThinking || inputMessage.length > 4000"
                   class="rounded-lg p-2 transition-colors flex-shrink-0"
                   :class="isLoading ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-primary text-white hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed'"
                   :aria-label="isLoading ? 'Stop generating' : 'Send message'"
@@ -97,6 +129,15 @@
 import { ref, nextTick } from 'vue'
 import { Plus, Lightbulb, ArrowUp, Square } from 'lucide-vue-next'
 
+interface AttachedImage {
+  file: File
+  name: string
+  size: number
+  type: string
+  preview: string
+  base64: string
+}
+
 interface Props {
   sidebarOpen: boolean
   errorMessage: string
@@ -106,7 +147,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'send-message', message: string): void
+  (e: 'send-message', data: { message: string; imageData?: string; imageType?: string }): void
   (e: 'file-upload', file: File): void
   (e: 'generate-thought'): void
   (e: 'update:selectedModel', value: string): void
@@ -119,19 +160,70 @@ const emit = defineEmits<Emits>()
 // Local state
 const inputMessage = ref('')
 const messageInput = ref<HTMLTextAreaElement | null>(null)
+const imageInput = ref<HTMLInputElement | null>(null)
+const attachedImage = ref<AttachedImage | null>(null)
+
+// Utility functions
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`
+}
+
+const convertFileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      // Remove the data URL prefix (data:image/jpeg;base64,)
+      const base64 = result.split(',')[1]
+      resolve(base64)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+const validateImageFile = (file: File): boolean => {
+  const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
+  const maxSize = 10 * 1024 * 1024 // 10MB
+
+  if (!allowedTypes.includes(file.type)) {
+    alert('Please select a valid image file (PNG, JPEG, WebP, or GIF)')
+    return false
+  }
+
+  if (file.size > maxSize) {
+    alert('Image file size must be less than 10MB')
+    return false
+  }
+
+  return true
+}
 
 // Handlers
 const handleSendMessage = () => {
-  if (!inputMessage.value.trim() || props.isLoading) {
+  if ((!inputMessage.value.trim() && !attachedImage.value) || props.isLoading) {
     if (props.isLoading) {
       emit('cancel-request')
     }
     return
   }
   
-  const message = inputMessage.value
+  const message = inputMessage.value.trim() || 'Analyze this image'
+  const imageData = attachedImage.value?.base64
+  const imageType = attachedImage.value?.type
+  
+  // Clear inputs
   inputMessage.value = ''
-  emit('send-message', message)
+  attachedImage.value = null
+  if (imageInput.value) {
+    imageInput.value.value = ''
+  }
+  
+  emit('send-message', { message, imageData, imageType })
 }
 
 const handleEnterKey = (event: KeyboardEvent) => {
@@ -140,6 +232,46 @@ const handleEnterKey = (event: KeyboardEvent) => {
   }
   event.preventDefault()
   handleSendMessage()
+}
+
+const handleImageUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  
+  if (!file) return
+  
+  if (!validateImageFile(file)) {
+    target.value = '' // Clear the input
+    return
+  }
+
+  try {
+    const base64 = await convertFileToBase64(file)
+    const preview = URL.createObjectURL(file)
+    
+    attachedImage.value = {
+      file,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      preview,
+      base64
+    }
+  } catch (error) {
+    console.error('Error processing image:', error)
+    alert('Error processing image. Please try again.')
+    target.value = '' // Clear the input
+  }
+}
+
+const removeAttachedImage = () => {
+  if (attachedImage.value?.preview) {
+    URL.revokeObjectURL(attachedImage.value.preview)
+  }
+  attachedImage.value = null
+  if (imageInput.value) {
+    imageInput.value.value = ''
+  }
 }
 
 const handleFileUpload = (event: Event) => {

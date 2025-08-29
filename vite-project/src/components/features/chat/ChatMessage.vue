@@ -97,6 +97,16 @@
     <div v-else-if="message.role === 'user'" class="flex justify-end mb-6">
       <div class="max-w-2xl">
         <div class="bg-primary text-white p-4 rounded-xl rounded-br-none">
+          <!-- Attached Image -->
+          <div v-if="message.imageData" class="mb-3">
+            <img 
+              :src="getImageDataUrl(message.imageData, message.imageType)"
+              alt="User uploaded image"
+              class="max-w-full h-auto rounded-lg border border-slate-300 shadow-sm"
+              style="max-height: 300px; object-fit: contain;"
+            />
+          </div>
+          <!-- Message Content -->
           <p class="text-sm md:text-base leading-relaxed">{{ message.content }}</p>
         </div>
       </div>
@@ -169,5 +179,27 @@ const toggleThinking = () => {
 
 const copyMessage = async () => {
   emit('copy-message', props.message.content)
+}
+
+// Helper function to create proper data URL for images
+const getImageDataUrl = (base64Data: string, imageType?: string): string => {
+  // Use the provided imageType if available, otherwise try to detect from base64 header
+  if (imageType) {
+    return `data:${imageType};base64,${base64Data}`
+  }
+  
+  // Fallback to detection from base64 header
+  if (base64Data.startsWith('/9j/')) {
+    return `data:image/jpeg;base64,${base64Data}`
+  } else if (base64Data.startsWith('iVBORw0KGgo')) {
+    return `data:image/png;base64,${base64Data}`
+  } else if (base64Data.startsWith('UklGR')) {
+    return `data:image/webp;base64,${base64Data}`
+  } else if (base64Data.startsWith('R0lGODlh') || base64Data.startsWith('R0lGODdh')) {
+    return `data:image/gif;base64,${base64Data}`
+  } else {
+    // Default to jpeg if we can't detect the format
+    return `data:image/jpeg;base64,${base64Data}`
+  }
 }
 </script>

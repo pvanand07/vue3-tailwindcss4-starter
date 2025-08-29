@@ -13,6 +13,8 @@ export interface ChatMessage {
   thinkingExpanded?: boolean
   isLoading?: boolean
   timestamp?: string
+  imageData?: string
+  imageType?: string
 }
 
 export interface Chat {
