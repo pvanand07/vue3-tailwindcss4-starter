@@ -274,13 +274,7 @@ const removeAttachedImage = () => {
   }
 }
 
-const handleFileUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (file) {
-    emit('file-upload', file)
-  }
-}
+
 
 // Focus method for external use
 const focus = () => {

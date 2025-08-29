@@ -19,8 +19,10 @@ export interface DocumentDetail {
     created_at: string
     created_by: 'assistant' | 'upload'
     page_range: string
+    applicability?: string
   }
   content: string
+  pages: Record<string, string>
 }
 
 export interface DocumentListResponse {

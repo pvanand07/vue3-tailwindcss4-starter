@@ -111,9 +111,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { X, Upload, FileText } from 'lucide-vue-next'
-import { useDocumentStore } from '../../../stores/document'
+
 import { useChatStore } from '../../../stores/chat'
 
 interface Props {
@@ -128,7 +128,7 @@ interface Emits {
 defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const documentStore = useDocumentStore()
+
 const chatStore = useChatStore()
 
 // Local state

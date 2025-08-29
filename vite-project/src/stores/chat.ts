@@ -79,7 +79,7 @@ export const useChatStore = defineStore('chat', () => {
 
   const loadUserId = () => {
     const preferences = ChatStorage.loadUserPreferences({})
-    userId.value = preferences.userId || null
+    userId.value = preferences?.userId || null
   }
 
   // Model management

@@ -4,8 +4,8 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/api/v1/chat",
-      "destination": "/api/v1/chat.js"
+      "source": "/api/v1/(.*)",
+      "destination": "/api/v1/index.js"
     },
     {
       "source": "/(.*)",
