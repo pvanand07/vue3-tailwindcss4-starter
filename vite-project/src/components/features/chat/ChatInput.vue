@@ -83,17 +83,17 @@
                   <span class="sm:hidden">✨</span>
                 </button>
                 <select 
-                  :model-value="selectedModel" 
-                  @update:model-value="$emit('update:selectedModel', $event)"
+                  :value="selectedModel" 
+                  @change="handleModelChange"
                   class="hidden sm:block text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer hover:bg-slate-100 rounded-md px-2 py-1 max-w-48"
                   aria-label="Select AI Model"
                 >
-                  <option value="openai/gpt-4.1-mini">GPT-4.1-Mini</option>
-                  <option value="google/gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                  <option value="openai/gpt-4.1">GPT-4.1</option>
                   <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
-                  <option value="qwen/qwen3-coder:floor">Qwen3 Coder</option>
                   <option value="z-ai/glm-4.5">GLM 4.5</option>
-                  <option value="">Grok 3 Mini</option>
+                  <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
+                  <option value="x-ai/grok-code-fast-1">Grok Code Fast 1</option>
+                  <option value="anthropic/claude-sonnet-4">Sonnet 4</option>
                 </select>
               </div>
               
@@ -156,6 +156,13 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+const handleModelChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement
+  const newModel = target.value
+  console.log('🎯 ChatInput: Model changed to:', newModel)
+  emit('update:selectedModel', newModel)
+}
 
 // Local state
 const inputMessage = ref('')

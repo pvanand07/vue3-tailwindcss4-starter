@@ -24,7 +24,7 @@ export const useChatStore = defineStore('chat', () => {
   const isThinking = ref(false)
   const errorMessage = ref('')
   const abortController = ref<AbortController | null>(null)
-  const selectedModel = ref('openai/gpt-4.1-mini')
+  const selectedModel = ref('openai/gpt-4.1')
   const conversationId = ref<string | null>(null)
   const isSaving = ref(false)
   const userLocation = ref<{ country: string; details: string } | null>(null)
@@ -80,11 +80,26 @@ export const useChatStore = defineStore('chat', () => {
   const loadUserId = () => {
     const preferences = ChatStorage.loadUserPreferences({})
     userId.value = preferences?.userId || null
+    // Also load selected model from preferences
+    if (preferences?.selectedModel) {
+      console.log('📖 Loading saved model preference:', preferences.selectedModel)
+      selectedModel.value = preferences.selectedModel
+    }
   }
 
   // Model management
   const setSelectedModel = (model: string) => {
+    console.log('🔄 Model selection changed:', {
+      from: selectedModel.value,
+      to: model,
+      timestamp: new Date().toISOString()
+    })
     selectedModel.value = model
+    // Save model preference to localStorage
+    ChatStorage.saveUserPreferences({ 
+      userId: userId.value, 
+      selectedModel: model 
+    })
   }
 
   // Geolocation
@@ -139,6 +154,14 @@ export const useChatStore = defineStore('chat', () => {
         : ''
 
       // Create API request
+      console.log('🚀 Creating API request with model:', {
+        selectedModel: selectedModel.value,
+        conversationId: conversationId.value,
+        userId: userId.value,
+        hasImageData: !!imageData,
+        timestamp: new Date().toISOString()
+      })
+      
       const request = chatAPI.createRequest(
         userMessage,
         conversationId.value!,
@@ -147,6 +170,14 @@ export const useChatStore = defineStore('chat', () => {
         userId.value || undefined,
         imageData
       )
+      
+      console.log('📤 Final API request payload:', {
+        query: request.query.substring(0, 50) + '...',
+        conversation_id: request.conversation_id,
+        model_id: request.model_id,
+        user_id: request.user_id,
+        hasImageData: !!request.image_data
+      })
 
       // Add assistant message placeholder
       const assistantMessage = chatAPI.createLoadingMessage(generateId())

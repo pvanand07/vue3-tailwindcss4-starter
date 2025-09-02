@@ -58,6 +58,12 @@ export class ChatAPI {
     onChunk: (content: string) => void,
     signal?: AbortSignal
   ): Promise<void> {
+    console.log('📡 ChatAPI: Sending request to', API_CONFIG.ENDPOINT, 'with payload:', {
+      ...request,
+      query: request.query.substring(0, 50) + '...',
+      image_data: request.image_data ? '[IMAGE_DATA]' : undefined
+    })
+    
     const response = await fetch(API_CONFIG.ENDPOINT, {
       method: 'POST',
       headers: {

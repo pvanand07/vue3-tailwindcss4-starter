@@ -129,7 +129,7 @@ onUnmounted(() => {
         :selected-model="chatStore.selectedModel"
         @toggle-sidebar="uiStore.toggleSidebar"
         @start-new-chat="startNewChat"
-        @update:selected-model="chatStore.selectedModel = $event"
+        @update:selected-model="chatStore.setSelectedModel"
       />
 
       <!-- Chat Messages -->
@@ -171,7 +171,7 @@ onUnmounted(() => {
         @send-message="handleSendMessage"
         @file-upload="handleFileUpload"
         @generate-thought="generateThought"
-        @update:selected-model="chatStore.selectedModel = $event"
+        @update:selected-model="chatStore.setSelectedModel"
         @cancel-request="chatStore.cancelRequest"
       />
     </div>
