@@ -148,4 +148,3 @@ export function calculateTotalImageSize(images: string[]): number {
   if (!images || images.length === 0) return 0
   return images.reduce((total, img) => total + calculateBase64Size(img), 0)
 }
-
