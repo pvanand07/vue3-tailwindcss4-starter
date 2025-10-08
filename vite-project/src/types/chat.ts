@@ -15,6 +15,8 @@ export interface ChatMessage {
   timestamp?: string
   imageData?: string
   imageType?: string
+  imagesData?: string[]
+  generatedImages?: string[]
 }
 
 export interface Chat {

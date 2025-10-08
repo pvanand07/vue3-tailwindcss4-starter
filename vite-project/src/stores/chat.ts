@@ -6,6 +6,7 @@ import { chatAPI } from '../api/chat'
 import { ChatStorage } from '../utils/storage'
 import { DateUtils } from '../utils/date'
 import { TextUtils } from '../utils/text'
+import { compressImages, calculateTotalImageSize } from '../utils/imageCompression'
 
 // Store Configuration
 const CONFIG = {
@@ -29,6 +30,7 @@ export const useChatStore = defineStore('chat', () => {
   const isSaving = ref(false)
   const userLocation = ref<{ country: string; details: string } | null>(null)
   const userId = ref<string | null>(null)
+  const createMode = ref(false)
 
   // Computed
   const hasUserMessages = computed(() => {
@@ -102,6 +104,12 @@ export const useChatStore = defineStore('chat', () => {
     })
   }
 
+  // Create mode management
+  const toggleCreateMode = () => {
+    createMode.value = !createMode.value
+    console.log('🎨 Create mode toggled:', createMode.value)
+  }
+
   // Geolocation
   const getUserLocation = async () => {
     if (navigator.geolocation) {
@@ -141,7 +149,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   // API Functions
-  const sendMessageToAPI = async (userMessage: string, imageData?: string) => {
+  const sendMessageToAPI = async (userMessage: string, imagesData?: string[]) => {
     if (!conversationId.value) {
       resetConversation()
     }
@@ -158,7 +166,8 @@ export const useChatStore = defineStore('chat', () => {
         selectedModel: selectedModel.value,
         conversationId: conversationId.value,
         userId: userId.value,
-        hasImageData: !!imageData,
+        hasImagesData: !!(imagesData && imagesData.length > 0),
+        imagesCount: imagesData?.length || 0,
         timestamp: new Date().toISOString()
       })
       
@@ -168,7 +177,8 @@ export const useChatStore = defineStore('chat', () => {
         selectedModel.value || undefined,
         locationContext,
         userId.value || undefined,
-        imageData
+        imagesData,
+        createMode.value
       )
       
       console.log('📤 Final API request payload:', {
@@ -176,7 +186,9 @@ export const useChatStore = defineStore('chat', () => {
         conversation_id: request.conversation_id,
         model_id: request.model_id,
         user_id: request.user_id,
-        hasImageData: !!request.image_data
+        hasImagesData: !!(request.images_data && request.images_data.length > 0),
+        imagesCount: request.images_data?.length || 0,
+        createMode: createMode.value
       })
 
       // Add assistant message placeholder
@@ -218,13 +230,24 @@ export const useChatStore = defineStore('chat', () => {
         messages.value[assistantIndex].content = responseContent
       }
 
-      // Send message via API
+      // Handle generated images
+      const onImage = (imageUrl: string) => {
+        if (!messages.value[assistantIndex].generatedImages) {
+          messages.value[assistantIndex].generatedImages = []
+        }
+        messages.value[assistantIndex].generatedImages!.push(imageUrl)
+        console.log('🖼️ Image received:', imageUrl.substring(0, 50) + '...')
+      }
+
+      // Send message via API - use image endpoint if in create mode
       await chatAPI.sendMessage(
         request,
         onToolStart,
         onToolEnd,
         onChunk,
-        abortController.value.signal
+        onImage,
+        abortController.value.signal,
+        createMode.value
       )
 
       messages.value[assistantIndex].isLoading = false
@@ -283,15 +306,23 @@ export const useChatStore = defineStore('chat', () => {
     currentChatId.value = chat._id
     currentChatTitle.value = chat.title
     conversationId.value = chat.conversationId || uuidv4()
-    messages.value = chat.messages.map(msg => ({
-      ...msg,
-      isLoading: false,
-      tools: msg.tools || [],
-      charts: msg.charts || [],
-      thinkingExpanded: msg.thinkingExpanded || false,
-      ...(msg.imageData && { imageData: msg.imageData }),
-      ...(msg.imageType && { imageType: msg.imageType })
-    }))
+    messages.value = chat.messages.map(msg => {
+      // Handle backward compatibility: convert old imageData to new imagesData format
+      let imagesData = msg.imagesData
+      if (!imagesData && msg.imageData) {
+        imagesData = [msg.imageData]
+      }
+      
+      return {
+        ...msg,
+        isLoading: false,
+        tools: msg.tools || [],
+        charts: msg.charts || [],
+        thinkingExpanded: msg.thinkingExpanded || false,
+        ...(imagesData && { imagesData }),
+        ...(msg.generatedImages && { generatedImages: msg.generatedImages })
+      }
+    })
   }
 
   const saveCurrentChat = async () => {
@@ -303,20 +334,78 @@ export const useChatStore = defineStore('chat', () => {
 
     try {
       const chatIndex = chatHistory.value.findIndex(chat => chat._id === currentChatId.value)
+      
+      // Compress images in messages before saving
+      const messagesWithCompressedImages = await Promise.all(
+        messages.value.map(async (msg) => {
+          const processedMsg: any = {
+            role: msg.role,
+            content: msg.content,
+            id: msg.id,
+            tools: msg.tools || [],
+            charts: msg.charts || [],
+            thinkingExpanded: msg.thinkingExpanded || false,
+            timestamp: msg.timestamp || new Date().toISOString()
+          }
+
+          // Compress user-uploaded images
+          if (msg.imagesData && msg.imagesData.length > 0) {
+            try {
+              const originalSize = calculateTotalImageSize(msg.imagesData)
+              const compressedImages = await compressImages(msg.imagesData, {
+                maxWidth: 800,
+                maxHeight: 800,
+                quality: 0.6
+              })
+              const compressedSize = calculateTotalImageSize(compressedImages)
+              
+              console.log('🗜️ Compressed user images:', {
+                count: msg.imagesData.length,
+                originalMB: originalSize.toFixed(2),
+                compressedMB: compressedSize.toFixed(2),
+                savings: ((1 - compressedSize / originalSize) * 100).toFixed(1) + '%'
+              })
+              
+              processedMsg.imagesData = compressedImages
+            } catch (err) {
+              console.warn('Failed to compress user images, using originals:', err)
+              processedMsg.imagesData = msg.imagesData
+            }
+          }
+
+          // Compress generated images
+          if (msg.generatedImages && msg.generatedImages.length > 0) {
+            try {
+              const originalSize = calculateTotalImageSize(msg.generatedImages)
+              const compressedImages = await compressImages(msg.generatedImages, {
+                maxWidth: 800,
+                maxHeight: 800,
+                quality: 0.6
+              })
+              const compressedSize = calculateTotalImageSize(compressedImages)
+              
+              console.log('🗜️ Compressed generated images:', {
+                count: msg.generatedImages.length,
+                originalMB: originalSize.toFixed(2),
+                compressedMB: compressedSize.toFixed(2),
+                savings: ((1 - compressedSize / originalSize) * 100).toFixed(1) + '%'
+              })
+              
+              processedMsg.generatedImages = compressedImages
+            } catch (err) {
+              console.warn('Failed to compress generated images, using originals:', err)
+              processedMsg.generatedImages = msg.generatedImages
+            }
+          }
+
+          return processedMsg
+        })
+      )
+
       const chatData: Chat = {
         _id: currentChatId.value,
         title: currentChatTitle.value || generateChatTitle(),
-        messages: messages.value.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-          id: msg.id,
-          tools: msg.tools || [],
-          charts: msg.charts || [],
-          thinkingExpanded: msg.thinkingExpanded || false,
-          timestamp: msg.timestamp || new Date().toISOString(),
-          ...(msg.imageData && { imageData: msg.imageData }),
-          ...(msg.imageType && { imageType: msg.imageType })
-        })),
+        messages: messagesWithCompressedImages,
         conversationId: conversationId.value || uuidv4(),
         createdAt: chatIndex === -1 ? new Date().toISOString() : chatHistory.value[chatIndex].createdAt,
         updatedAt: new Date().toISOString()
@@ -529,6 +618,7 @@ export const useChatStore = defineStore('chat', () => {
     isSaving,
     userLocation,
     userId,
+    createMode,
 
     // Computed
     hasUserMessages,
@@ -553,6 +643,7 @@ export const useChatStore = defineStore('chat', () => {
     initialize,
     setUserId,
     loadUserId,
-    setSelectedModel
+    setSelectedModel,
+    toggleCreateMode
   }
 })

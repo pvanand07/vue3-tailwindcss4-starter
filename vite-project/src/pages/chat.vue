@@ -56,15 +56,14 @@ const calculateChartOffset = (messageIndex: number): number => {
 }
 
 // Message handling functions
-const handleSendMessage = async (data: { message: string; imageData?: string; imageType?: string }) => {
+const handleSendMessage = async (data: { message: string; imagesData?: string[] }) => {
   chatStore.errorMessage = ''
   
   // Add user message
   chatStore.addMessage({
     role: 'user',
     content: data.message,
-    imageData: data.imageData,
-    imageType: data.imageType
+    imagesData: data.imagesData
   })
 
   chatStore.isTyping = true
@@ -73,7 +72,7 @@ const handleSendMessage = async (data: { message: string; imageData?: string; im
   scrollToBottom()
   
   // Send message to API
-  await chatStore.sendMessageToAPI(data.message, data.imageData)
+  await chatStore.sendMessageToAPI(data.message, data.imagesData)
   scrollToBottom()
 }
 
@@ -127,9 +126,11 @@ onUnmounted(() => {
       <FloatingControls 
         :sidebar-open="uiStore.sidebarOpen"
         :selected-model="chatStore.selectedModel"
+        :create-mode="chatStore.createMode"
         @toggle-sidebar="uiStore.toggleSidebar"
         @start-new-chat="startNewChat"
         @update:selected-model="chatStore.setSelectedModel"
+        @toggle-create-mode="chatStore.toggleCreateMode"
       />
 
       <!-- Chat Messages -->
@@ -168,6 +169,7 @@ onUnmounted(() => {
         :is-loading="chatStore.isLoading"
         :is-thinking="chatStore.isThinking"
         :selected-model="chatStore.selectedModel"
+        :create-mode="chatStore.createMode"
         @send-message="handleSendMessage"
         @file-upload="handleFileUpload"
         @generate-thought="generateThought"

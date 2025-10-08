@@ -3,6 +3,7 @@ import type { ChatMessage } from '../types/chat'
 // API Configuration
 export const API_CONFIG = {
   ENDPOINT: '/api/v1/chat', // Using Vite proxy
+  IMAGE_ENDPOINT: '/api/v1/chat-image', // Image creation endpoint
   MAX_RETRIES: 3,
   RETRY_DELAY_MS: 100
 } as const
@@ -14,11 +15,11 @@ export interface ChatRequest {
   model_id?: string
   context?: string
   user_id?: string
-  image_data?: string
+  images_data?: string[]
 }
 
 export interface ChatStreamEvent {
-  type: 'tool_start' | 'chunk' | 'tool_end' | 'progress' | 'full_response'
+  type: 'tool_start' | 'chunk' | 'tool_end' | 'progress' | 'full_response' | 'image'
   name?: string
   tool?: string
   input?: any
@@ -26,6 +27,7 @@ export interface ChatStreamEvent {
   content?: string
   output?: string
   data?: string
+  image_url?: string
   artifacts_data?: {
     chart_svg?: string
   }
@@ -56,15 +58,19 @@ export class ChatAPI {
     onToolStart: (tool: ChatToolData) => void,
     onToolEnd: (toolName: string, chartSvg?: string) => void,
     onChunk: (content: string) => void,
-    signal?: AbortSignal
+    onImage: (imageUrl: string) => void,
+    signal?: AbortSignal,
+    useImageEndpoint: boolean = false
   ): Promise<void> {
-    console.log('📡 ChatAPI: Sending request to', API_CONFIG.ENDPOINT, 'with payload:', {
+    const endpoint = useImageEndpoint ? API_CONFIG.IMAGE_ENDPOINT : API_CONFIG.ENDPOINT
+    
+    console.log('📡 ChatAPI: Sending request to', endpoint, 'with payload:', {
       ...request,
       query: request.query.substring(0, 50) + '...',
-      image_data: request.image_data ? '[IMAGE_DATA]' : undefined
+      images_data: request.images_data ? `[${request.images_data.length} IMAGE(S)]` : undefined
     })
     
-    const response = await fetch(API_CONFIG.ENDPOINT, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -79,20 +85,34 @@ export class ChatAPI {
 
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
+    let buffer = '' // Buffer for incomplete lines
 
     try {
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
+        const chunk = decoder.decode(value, { stream: true })
+        buffer += chunk
+        
+        // Split by newlines but keep the last incomplete line in buffer
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || '' // Keep the last (potentially incomplete) line
 
         for (const line of lines) {
           if (!line.trim() || !line.startsWith('data:')) continue
 
+          const jsonStr = line.substring(5).trim()
+          if (!jsonStr || jsonStr.length === 0) continue // Skip empty data lines
+          
+          // Basic validation: must start with { and end with }
+          if (!jsonStr.startsWith('{') || !jsonStr.endsWith('}')) {
+            // Incomplete JSON, will be completed in next chunk
+            continue
+          }
+
           try {
-            const eventData: ChatStreamEvent = JSON.parse(line.substring(5).trim())
+            const eventData: ChatStreamEvent = JSON.parse(jsonStr)
 
             if (eventData.type === 'tool_start') {
               const toolName = eventData.name || eventData.tool || 'Unknown Tool'
@@ -112,9 +132,35 @@ export class ChatAPI {
               onToolEnd(toolName, chartSvg)
             } else if (eventData.type === 'chunk' && eventData.content) {
               onChunk(eventData.content)
+            } else if (eventData.type === 'image' && eventData.image_url) {
+              onImage(eventData.image_url)
             }
           } catch (e) {
-            console.error('Error parsing JSON:', e, line)
+            // Silently skip parse errors - they're expected for malformed/incomplete data
+            // Only log if it looks like it should have been valid
+            if (jsonStr.length < 1000) {
+              console.warn('Failed to parse SSE event:', jsonStr.substring(0, 100))
+            }
+          }
+        }
+      }
+      
+      // Process any remaining data in buffer
+      if (buffer.trim()) {
+        const line = buffer.trim()
+        if (line.startsWith('data:')) {
+          const jsonStr = line.substring(5).trim()
+          if (jsonStr && jsonStr.startsWith('{') && jsonStr.endsWith('}')) {
+            try {
+              const eventData: ChatStreamEvent = JSON.parse(jsonStr)
+              if (eventData.type === 'image' && eventData.image_url) {
+                onImage(eventData.image_url)
+              } else if (eventData.type === 'chunk' && eventData.content) {
+                onChunk(eventData.content)
+              }
+            } catch (e) {
+              console.warn('Failed to parse final buffer:', jsonStr.substring(0, 100))
+            }
           }
         }
       }
@@ -159,9 +205,12 @@ export class ChatAPI {
     modelId?: string,
     locationContext?: string,
     userId?: string,
-    imageData?: string
+    imagesData?: string[],
+    isCreateMode: boolean = false
   ): ChatRequest {
-    const baseContext = 'Include charts in your response using chartjs to better assist the user'
+    const baseContext = isCreateMode 
+      ? 'Create or generate images based on the provided context and user request'
+      : 'Include charts in your response using chartjs to better assist the user'
     const context = locationContext ? `${locationContext}${baseContext}` : baseContext
 
     const request: ChatRequest = {
@@ -171,12 +220,12 @@ export class ChatAPI {
       user_id: userId || 'anonymous'
     }
 
-    if (modelId) {
+    if (modelId && !isCreateMode) {
       request.model_id = modelId
     }
 
-    if (imageData) {
-      request.image_data = imageData
+    if (imagesData && imagesData.length > 0) {
+      request.images_data = imagesData
     }
 
     return request

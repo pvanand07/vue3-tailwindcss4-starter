@@ -8,26 +8,22 @@
           {{ errorMessage }}
         </div>
         
-        <!-- Attached Image Preview -->
-        <div v-if="attachedImage" class="mb-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
-          <div class="flex items-start gap-3">
-            <div class="relative">
+        <!-- Attached Images Preview -->
+        <div v-if="attachedImages.length > 0" class="mb-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
+          <div class="flex flex-wrap gap-3">
+            <div v-for="(image, index) in attachedImages" :key="index" class="relative">
               <img 
-                :src="attachedImage.preview" 
-                :alt="attachedImage.name"
+                :src="image.preview" 
+                :alt="image.name"
                 class="w-16 h-16 object-cover rounded-md border border-slate-300"
               />
               <button
-                @click="removeAttachedImage"
+                @click="removeAttachedImage(index)"
                 class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
                 aria-label="Remove image"
               >
                 ×
               </button>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-slate-700 truncate">{{ attachedImage.name }}</p>
-              <p class="text-xs text-slate-500">{{ formatFileSize(attachedImage.size) }}</p>
             </div>
           </div>
         </div>
@@ -43,7 +39,7 @@
                 :disabled="isLoading"
                 class="w-full bg-transparent p-2 text-slate-800 placeholder-slate-500 focus:outline-none resize-none scrollbar-thin"
                 rows="1"
-                placeholder="Ask me anything about research, data analysis, or market trends..."
+                :placeholder="createMode ? 'Describe what you want to create (optional with images)...' : 'Ask me anything about research, data analysis, or market trends...'"
                 maxlength="4000"
                 aria-label="Message input"
               ></textarea>
@@ -65,10 +61,11 @@
                     id="image-upload" 
                     accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
                     ref="imageInput"
+                    multiple
                   >
                   <label for="image-upload" class="cursor-pointer flex items-center gap-2">
                     <Plus class="w-4 h-4" />
-                    <span class="hidden sm:inline">Image</span>
+                    <span class="hidden sm:inline">Image{{ attachedImages.length > 0 ? ` (${attachedImages.length})` : '' }}</span>
                   </label>
                 </button>
                 <button
@@ -101,7 +98,7 @@
               <div class="flex items-center">
                 <button
                   type="submit"
-                  :disabled="(!inputMessage.trim() && !attachedImage && !isLoading) || isThinking || inputMessage.length > 4000"
+                  :disabled="(!inputMessage.trim() && attachedImages.length === 0 && !isLoading) || isThinking || inputMessage.length > 4000"
                   class="rounded-lg p-2 transition-colors flex-shrink-0"
                   :class="isLoading ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-primary text-white hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed'"
                   :aria-label="isLoading ? 'Stop generating' : 'Send message'"
@@ -128,6 +125,7 @@
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
 import { Plus, Lightbulb, ArrowUp, Square } from 'lucide-vue-next'
+import { compressBase64Image } from '../../../utils/imageCompression'
 
 interface AttachedImage {
   file: File
@@ -144,10 +142,11 @@ interface Props {
   isLoading: boolean
   isThinking: boolean
   selectedModel: string
+  createMode: boolean
 }
 
 interface Emits {
-  (e: 'send-message', data: { message: string; imageData?: string; imageType?: string }): void
+  (e: 'send-message', data: { message: string; imagesData?: string[] }): void
   (e: 'file-upload', file: File): void
   (e: 'generate-thought'): void
   (e: 'update:selectedModel', value: string): void
@@ -168,7 +167,7 @@ const handleModelChange = (event: Event) => {
 const inputMessage = ref('')
 const messageInput = ref<HTMLTextAreaElement | null>(null)
 const imageInput = ref<HTMLInputElement | null>(null)
-const attachedImage = ref<AttachedImage | null>(null)
+const attachedImages = ref<AttachedImage[]>([])
 
 // Utility functions
 const formatFileSize = (bytes: number): string => {
@@ -212,25 +211,35 @@ const validateImageFile = (file: File): boolean => {
 
 // Handlers
 const handleSendMessage = () => {
-  if ((!inputMessage.value.trim() && !attachedImage.value) || props.isLoading) {
-    if (props.isLoading) {
-      emit('cancel-request')
-    }
+  // If loading, cancel the request
+  if (props.isLoading) {
+    emit('cancel-request')
     return
   }
   
-  const message = inputMessage.value.trim() || 'Analyze this image'
-  const imageData = attachedImage.value?.base64
-  const imageType = attachedImage.value?.type
+  // In create mode, require either message or images
+  if (props.createMode) {
+    if (!inputMessage.value.trim() && attachedImages.value.length === 0) {
+      return
+    }
+  } else {
+    // In chat mode, require at least a message
+    if (!inputMessage.value.trim() && attachedImages.value.length === 0) {
+      return
+    }
+  }
+  
+  const message = inputMessage.value.trim() || (attachedImages.value.length > 0 ? (props.createMode ? 'Create images based on context' : 'Analyze these images') : '')
+  const imagesData = attachedImages.value.length > 0 ? attachedImages.value.map(img => img.base64) : undefined
   
   // Clear inputs
   inputMessage.value = ''
-  attachedImage.value = null
+  attachedImages.value = []
   if (imageInput.value) {
     imageInput.value.value = ''
   }
   
-  emit('send-message', { message, imageData, imageType })
+  emit('send-message', { message, imagesData })
 }
 
 const handleEnterKey = (event: KeyboardEvent) => {
@@ -243,40 +252,67 @@ const handleEnterKey = (event: KeyboardEvent) => {
 
 const handleImageUpload = async (event: Event) => {
   const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
+  const files = target.files
   
-  if (!file) return
+  if (!files || files.length === 0) return
   
-  if (!validateImageFile(file)) {
-    target.value = '' // Clear the input
-    return
+  // Validate all files
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    if (!validateImageFile(file)) {
+      target.value = '' // Clear the input
+      return
+    }
   }
 
   try {
-    const base64 = await convertFileToBase64(file)
-    const preview = URL.createObjectURL(file)
-    
-    attachedImage.value = {
-      file,
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      preview,
-      base64
+    // Process all files
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const base64 = await convertFileToBase64(file)
+      const preview = URL.createObjectURL(file)
+      
+      // Compress the image before storing
+      let compressedBase64 = base64
+      try {
+        compressedBase64 = await compressBase64Image(base64, {
+          maxWidth: 1024,
+          maxHeight: 1024,
+          quality: 0.7
+        })
+        console.log('🗜️ Image compressed:', {
+          original: (base64.length * 0.75 / 1024).toFixed(2) + 'KB',
+          compressed: (compressedBase64.length * 0.75 / 1024).toFixed(2) + 'KB'
+        })
+      } catch (compressionError) {
+        console.warn('Failed to compress image, using original:', compressionError)
+      }
+      
+      attachedImages.value.push({
+        file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        preview,
+        base64: compressedBase64
+      })
     }
   } catch (error) {
-    console.error('Error processing image:', error)
-    alert('Error processing image. Please try again.')
+    console.error('Error processing images:', error)
+    alert('Error processing images. Please try again.')
     target.value = '' // Clear the input
   }
+  
+  // Clear the input so the same files can be selected again if needed
+  target.value = ''
 }
 
-const removeAttachedImage = () => {
-  if (attachedImage.value?.preview) {
-    URL.revokeObjectURL(attachedImage.value.preview)
+const removeAttachedImage = (index: number) => {
+  if (attachedImages.value[index]?.preview) {
+    URL.revokeObjectURL(attachedImages.value[index].preview)
   }
-  attachedImage.value = null
-  if (imageInput.value) {
+  attachedImages.value.splice(index, 1)
+  if (imageInput.value && attachedImages.value.length === 0) {
     imageInput.value.value = ''
   }
 }
