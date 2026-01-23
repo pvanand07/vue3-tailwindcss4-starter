@@ -51,7 +51,7 @@
             
             <!-- Bottom Controls Row -->
             <div class="flex items-center justify-between mt-2">
-              <!-- Left: Image Upload, Think, Model -->
+              <!-- Left: Image Upload, Create, Model -->
               <div class="flex items-center gap-2">
                 <button type="button" class="flex items-center gap-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md px-3 py-1.5 flex-shrink-0 transition-colors" aria-label="Attach image">
                   <input 
@@ -70,16 +70,22 @@
                 </button>
                 <button
                   type="button"
-                  @click="$emit('generate-thought')"
-                  :disabled="isThinking || isLoading"
-                  class="flex items-center gap-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md px-3 py-1.5 disabled:cursor-not-allowed disabled:bg-slate-200 flex-shrink-0 transition-colors"
-                  aria-label="Generate thought"
+                  @click="$emit('toggle-create-mode')"
+                  :disabled="isLoading"
+                  :class="[
+                    'flex items-center gap-2 text-sm rounded-md px-3 py-1.5 disabled:cursor-not-allowed flex-shrink-0 transition-colors',
+                    createMode 
+                      ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                      : 'text-slate-600 hover:bg-slate-100'
+                  ]"
+                  :aria-label="createMode ? 'Switch to Chat mode' : 'Switch to Create mode'"
+                  :title="createMode ? 'Chat Mode' : 'Create Mode'"
                 >
-                  <Lightbulb class="w-4 h-4" />
-                  <span class="hidden sm:inline">Think</span>
-                  <span class="sm:hidden">✨</span>
+                  <Sparkles class="w-4 h-4" />
+                  <span class="hidden sm:inline">{{ createMode ? 'Creating' : 'Create' }}</span>
                 </button>
                 <select 
+                  v-if="!createMode"
                   :value="selectedModel" 
                   @change="handleModelChange"
                   class="hidden sm:block text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer hover:bg-slate-100 rounded-md px-2 py-1 max-w-48"
@@ -124,7 +130,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
-import { Plus, Lightbulb, ArrowUp, Square } from 'lucide-vue-next'
+import { Plus, Sparkles, ArrowUp, Square } from 'lucide-vue-next'
 import { compressBase64Image } from '../../../utils/imageCompression'
 
 interface AttachedImage {
@@ -148,7 +154,7 @@ interface Props {
 interface Emits {
   (e: 'send-message', data: { message: string; imagesData?: string[] }): void
   (e: 'file-upload', file: File): void
-  (e: 'generate-thought'): void
+  (e: 'toggle-create-mode'): void
   (e: 'update:selectedModel', value: string): void
   (e: 'cancel-request'): void
 }
@@ -170,14 +176,6 @@ const imageInput = ref<HTMLInputElement | null>(null)
 const attachedImages = ref<AttachedImage[]>([])
 
 // Utility functions
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`
-}
-
 const convertFileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()

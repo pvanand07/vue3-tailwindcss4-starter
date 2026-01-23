@@ -88,16 +88,6 @@ const handleFileUpload = (file: File) => {
   console.log('File selected:', file)
 }
 
-const generateThought = () => {
-  chatStore.isThinking = true
-  setTimeout(() => {
-    if (chatInput.value) {
-      chatInput.value.setInputValue("Let me think about this... What would be a good question to ask?")
-    }
-    chatStore.isThinking = false
-  }, 2000)
-}
-
 
 
 // Lifecycle
@@ -130,7 +120,6 @@ onUnmounted(() => {
         @toggle-sidebar="uiStore.toggleSidebar"
         @start-new-chat="startNewChat"
         @update:selected-model="chatStore.setSelectedModel"
-        @toggle-create-mode="chatStore.toggleCreateMode"
       />
 
       <!-- Chat Messages -->
@@ -172,7 +161,7 @@ onUnmounted(() => {
         :create-mode="chatStore.createMode"
         @send-message="handleSendMessage"
         @file-upload="handleFileUpload"
-        @generate-thought="generateThought"
+        @toggle-create-mode="chatStore.toggleCreateMode"
         @update:selected-model="chatStore.setSelectedModel"
         @cancel-request="chatStore.cancelRequest"
       />

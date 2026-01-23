@@ -286,6 +286,12 @@ export const useChatStore = defineStore('chat', () => {
 
   // Actions
   const startNewChat = () => {
+    console.log('🆕 Starting new chat:', {
+      previousChatId: currentChatId.value,
+      messageCount: messages.value.length,
+      createMode: createMode.value
+    })
+
     // Save current chat before starting new one
     if (currentChatId.value && messages.value.length > 0) {
       saveCurrentChat()
@@ -295,9 +301,19 @@ export const useChatStore = defineStore('chat', () => {
     currentChatTitle.value = ''
     resetConversation()
     errorMessage.value = ''
+
+    console.log('✅ New chat started:', { newChatId: currentChatId.value })
   }
 
   const loadChat = (chat: Chat) => {
+    console.log('🔄 Loading chat:', {
+      chatId: chat._id,
+      chatTitle: chat.title,
+      messageCount: chat.messages.length,
+      currentChatId: currentChatId.value,
+      createMode: createMode.value
+    })
+
     // Save current chat before switching
     if (currentChatId.value && messages.value.length > 0) {
       saveCurrentChat()
@@ -322,6 +338,11 @@ export const useChatStore = defineStore('chat', () => {
         ...(imagesData && { imagesData }),
         ...(msg.generatedImages && { generatedImages: msg.generatedImages })
       }
+    })
+
+    console.log('✅ Chat loaded successfully:', {
+      currentChatId: currentChatId.value,
+      messagesLoaded: messages.value.length
     })
   }
 

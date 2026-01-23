@@ -124,9 +124,11 @@
         <FloatingControls 
           :sidebar-open="isSidebarOpen"
           :selected-model="chatStore.selectedModel"
+          :create-mode="false"
           @toggle-sidebar="isSidebarOpen = !isSidebarOpen"
           @start-new-chat="handleNewChatFromDocument"
           @update:selected-model="chatStore.setSelectedModel"
+          @toggle-create-mode="() => {}"
         />
       </main>
     </div>

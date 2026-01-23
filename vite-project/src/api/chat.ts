@@ -210,7 +210,7 @@ export class ChatAPI {
   ): ChatRequest {
     const baseContext = isCreateMode 
       ? 'Create or generate images based on the provided context and user request'
-      : 'Include charts in your response using chartjs to better assist the user'
+      : ''
     const context = locationContext ? `${locationContext}${baseContext}` : baseContext
 
     const request: ChatRequest = {

@@ -206,6 +206,13 @@ const handleNewChat = () => {
 }
 
 const handleLoadChat = (chat: Chat) => {
+  console.log('📱 ChatSidebar: handleLoadChat called:', {
+    chatId: chat._id,
+    chatTitle: chat.title,
+    currentChatId: chatStore.currentChatId,
+    createMode: chatStore.createMode
+  })
+
   chatStore.loadChat(chat)
   
   // Close sidebar on mobile after selection
@@ -214,6 +221,8 @@ const handleLoadChat = (chat: Chat) => {
   }
   
   emit('chat-loaded')
+
+  console.log('📱 ChatSidebar: After loadChat, currentChatId:', chatStore.currentChatId)
 }
 
 const toggleOptionsMenu = (chatId: string) => {
