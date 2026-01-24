@@ -1,44 +1,42 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { v4 as uuidv4 } from 'uuid'
-import type { Chat, ChatMessage } from '../types/chat'
+import type { Thread, ChatMessage, MessageResponse } from '../types/chat'
 import { chatAPI } from '../api/chat'
 import { ChatStorage } from '../utils/storage'
 import { DateUtils } from '../utils/date'
 import { TextUtils } from '../utils/text'
-import { compressImages, calculateTotalImageSize } from '../utils/imageCompression'
-
-// Store Configuration
-const CONFIG = {
-  MAX_MESSAGE_LENGTH: 4000,
-  SAVE_DEBOUNCE_MS: 3000
-}
 
 export const useChatStore = defineStore('chat', () => {
   // State
   const messages = ref<ChatMessage[]>([])
-  const chatHistory = ref<Chat[]>([])
-  const currentChatId = ref<string | null>(null)
-  const currentChatTitle = ref('')
+  const threads = ref<Thread[]>([])
+  const currentThreadId = ref<string | null>(null)
+  const currentThreadTitle = ref('')
   const isLoading = ref(false)
   const isTyping = ref(false)
   const isThinking = ref(false)
   const errorMessage = ref('')
   const abortController = ref<AbortController | null>(null)
   const selectedModel = ref('openai/gpt-4.1')
-  const conversationId = ref<string | null>(null)
-  const isSaving = ref(false)
   const userLocation = ref<{ country: string; details: string } | null>(null)
   const userId = ref<string | null>(null)
-  const createMode = ref(false)
+  const isLoadingThreads = ref(false)
+  const isLoadingMessages = ref(false)
+
+  // Caching system
+  const messagesCache = new Map<string, ChatMessage[]>()
+  const cacheTimestamps = new Map<string, number>()
+  const preloadingThreads = new Set<string>() // Track threads being preloaded
+  const CACHE_MAX_AGE_MS = 5 * 60 * 1000 // 5 minutes cache validity
+  const MAX_CACHE_SIZE = 50 // Maximum number of threads to cache
 
   // Computed
   const hasUserMessages = computed(() => {
     return messages.value.some(msg => msg.role === 'user')
   })
 
-  const currentChat = computed(() => {
-    return chatHistory.value.find(chat => chat._id === currentChatId.value)
+  const currentThread = computed(() => {
+    return threads.value.find(thread => thread.id === currentThreadId.value)
   })
 
   // Utils
@@ -53,9 +51,11 @@ export const useChatStore = defineStore('chat', () => {
     return 'New Chat'
   }
 
-  const getLastMessage = (chat: Chat) => {
-    const lastMsg = chat.messages[chat.messages.length - 1]
-    if (!lastMsg) return 'No messages'
+  const getLastMessage = (thread: Thread) => {
+    // Find messages for this thread
+    const threadMessages = messages.value.filter(msg => msg.thread_id === thread.id)
+    if (threadMessages.length === 0) return 'No messages'
+    const lastMsg = threadMessages[threadMessages.length - 1]
     return TextUtils.truncate(lastMsg.content, 60)
   }
 
@@ -63,26 +63,193 @@ export const useChatStore = defineStore('chat', () => {
     return DateUtils.formatRelative(dateString)
   }
 
-  // Persistence
-  const saveToStorage = () => {
-    ChatStorage.saveChatHistory(chatHistory.value)
+  // API Functions - Thread Management
+  const loadThreads = async () => {
+    if (!userId.value) {
+      console.warn('Cannot load threads: userId not set')
+      return
+    }
+
+    // Load from cache first and display immediately
+    const cached = ChatStorage.loadThreadsCache(userId.value)
+    if (cached && cached.threads) {
+      threads.value = cached.threads
+      console.log('📦 Loaded threads from cache:', threads.value.length)
+    }
+
+    // Then fetch from API in the background
+    isLoadingThreads.value = true
+    try {
+      const response = await chatAPI.listThreads(userId.value)
+      threads.value = response.threads
+      
+      // Save to cache after successful API fetch
+      ChatStorage.saveThreadsCache(userId.value, response.threads)
+      
+      console.log('✅ Loaded threads from API:', threads.value.length)
+    } catch (error) {
+      console.error('Failed to load threads:', error)
+      errorMessage.value = 'Failed to load chat history'
+      
+      // If we have cached data, keep it even if API fails
+      if (!cached || !cached.threads || cached.threads.length === 0) {
+        threads.value = []
+      }
+    } finally {
+      isLoadingThreads.value = false
+    }
   }
 
-  const loadFromStorage = () => {
-    const loaded = ChatStorage.loadChatHistory([])
-    chatHistory.value = loaded || []
+  // Convert API messages to ChatMessage format
+  const convertMessages = (apiMessages: MessageResponse[]): ChatMessage[] => {
+    return apiMessages.map((msg: MessageResponse) => ({
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
+      thread_id: msg.thread_id,
+      created_at: msg.created_at,
+      timestamp: msg.created_at,
+      tools: msg.tool_events?.filter(e => e.type === 'tool_start').map(e => ({
+        name: e.name,
+        input: typeof e.input === 'string' ? e.input : JSON.stringify(e.input),
+        reasoning: ''
+      })) || [],
+      tool_events: msg.tool_events || [],
+      charts: [],
+      thinkingExpanded: false,
+      isLoading: false
+    }))
+  }
+
+  // Save messages to cache (both in-memory and localStorage)
+  const saveToCache = (threadId: string, messages: ChatMessage[]) => {
+    // Enforce cache size limit (LRU-like: remove oldest entries)
+    if (messagesCache.size >= MAX_CACHE_SIZE && !messagesCache.has(threadId)) {
+      // Remove oldest cache entry
+      let oldestThreadId = ''
+      let oldestTimestamp = Infinity
+      for (const [id, timestamp] of cacheTimestamps.entries()) {
+        if (timestamp < oldestTimestamp) {
+          oldestTimestamp = timestamp
+          oldestThreadId = id
+        }
+      }
+      if (oldestThreadId) {
+        messagesCache.delete(oldestThreadId)
+        cacheTimestamps.delete(oldestThreadId)
+        ChatStorage.removeMessagesCache(oldestThreadId)
+        console.log('🗑️ Removed oldest cache entry:', oldestThreadId)
+      }
+    }
+
+    // Save to in-memory cache
+    messagesCache.set(threadId, messages)
+    cacheTimestamps.set(threadId, Date.now())
+    
+    // Save to localStorage cache
+    ChatStorage.saveMessagesCache(threadId, messages)
+    
+    console.log('💾 Cached messages for thread:', threadId, `(${messages.length} messages)`)
+  }
+
+  // Get messages from cache (check localStorage first, then in-memory)
+  const getFromCache = (threadId: string): ChatMessage[] | null => {
+    // First check in-memory cache
+    const inMemoryCached = messagesCache.get(threadId)
+    const inMemoryTimestamp = cacheTimestamps.get(threadId)
+
+    if (inMemoryCached && inMemoryTimestamp) {
+      const age = Date.now() - inMemoryTimestamp
+      if (age <= CACHE_MAX_AGE_MS) {
+        console.log('✅ In-memory cache hit for thread:', threadId, `(age: ${Math.round(age / 1000)}s)`)
+        return [...inMemoryCached] // Return a copy to prevent mutations
+      }
+    }
+
+    // Check localStorage cache
+    const localStorageCached = ChatStorage.loadMessagesCache(threadId)
+    if (localStorageCached && localStorageCached.messages && localStorageCached.timestamp) {
+      const age = Date.now() - localStorageCached.timestamp
+      if (age <= CACHE_MAX_AGE_MS) {
+        // Restore to in-memory cache
+        const messages = localStorageCached.messages as ChatMessage[]
+        messagesCache.set(threadId, messages)
+        cacheTimestamps.set(threadId, localStorageCached.timestamp)
+        console.log('✅ LocalStorage cache hit for thread:', threadId, `(age: ${Math.round(age / 1000)}s)`)
+        return [...messages] // Return a copy to prevent mutations
+      } else {
+        // Cache expired, remove it
+        console.log('⏰ LocalStorage cache expired for thread:', threadId, `(age: ${Math.round(age / 1000)}s)`)
+        ChatStorage.removeMessagesCache(threadId)
+      }
+    }
+
+    return null
+  }
+
+  const loadThreadMessages = async (threadId: string, useCache: boolean = true, showCacheFirst: boolean = false) => {
+    if (!userId.value) {
+      console.warn('Cannot load messages: userId not set')
+      return
+    }
+
+    // Check cache first if enabled
+    if (useCache) {
+      const cached = getFromCache(threadId)
+      if (cached) {
+        if (showCacheFirst) {
+          // Show cache immediately, then refresh in background
+          messages.value = cached
+          console.log('⚡ Showing cached messages immediately:', cached.length)
+        } else {
+          // Return early if we have valid cache and not forcing refresh
+          messages.value = cached
+          return
+        }
+      }
+    }
+
+    // Fetch from API (either because no cache, or refreshing in background)
+    isLoadingMessages.value = true
+    try {
+      const response = await chatAPI.getThreadMessages(threadId, userId.value)
+      
+      // Convert API messages to ChatMessage format
+      const convertedMessages = convertMessages(response.messages)
+      messages.value = convertedMessages
+      
+      // Save to cache
+      saveToCache(threadId, convertedMessages)
+      
+      console.log('✅ Loaded messages from API:', messages.value.length)
+    } catch (error) {
+      console.error('Failed to load thread messages:', error)
+      errorMessage.value = 'Failed to load messages'
+      
+      // If we showed cache first and API fails, keep the cached messages
+      if (showCacheFirst && useCache) {
+        const cached = getFromCache(threadId)
+        if (cached) {
+          messages.value = cached
+          console.log('⚠️ API failed, keeping cached messages')
+        }
+      }
+    } finally {
+      isLoadingMessages.value = false
+    }
   }
 
   // User ID management
   const setUserId = (newUserId: string) => {
     userId.value = newUserId
-    ChatStorage.saveUserPreferences({ userId: newUserId })
+    ChatStorage.saveUserPreferences({ userId: newUserId, selectedModel: selectedModel.value })
+    // Load threads after setting user ID
+    loadThreads()
   }
 
   const loadUserId = () => {
     const preferences = ChatStorage.loadUserPreferences({})
     userId.value = preferences?.userId || null
-    // Also load selected model from preferences
     if (preferences?.selectedModel) {
       console.log('📖 Loading saved model preference:', preferences.selectedModel)
       selectedModel.value = preferences.selectedModel
@@ -97,17 +264,10 @@ export const useChatStore = defineStore('chat', () => {
       timestamp: new Date().toISOString()
     })
     selectedModel.value = model
-    // Save model preference to localStorage
     ChatStorage.saveUserPreferences({ 
       userId: userId.value, 
       selectedModel: model 
     })
-  }
-
-  // Create mode management
-  const toggleCreateMode = () => {
-    createMode.value = !createMode.value
-    console.log('🎨 Create mode toggled:', createMode.value)
   }
 
   // Geolocation
@@ -142,132 +302,115 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  // Core functions
-  const resetConversation = () => {
-    conversationId.value = uuidv4()
-    messages.value = []
-  }
-
   // API Functions
-  const sendMessageToAPI = async (userMessage: string, imagesData?: string[]) => {
-    if (!conversationId.value) {
-      resetConversation()
+  const sendMessageToAPI = async (userMessage: string) => {
+    console.log('🎬 sendMessageToAPI called with:', userMessage.substring(0, 50))
+    
+    if (!userId.value) {
+      console.error('❌ No user ID set')
+      errorMessage.value = 'Please set a user ID first'
+      return
     }
+
+    // Add assistant message placeholder before try block so it's accessible in catch
+    const assistantMessage = chatAPI.createLoadingMessage(generateId())
+    messages.value.push(assistantMessage)
+    const assistantIndex = messages.value.length - 1
 
     try {
       abortController.value = new AbortController()
 
-      const locationContext = userLocation.value
-        ? `User is in ${userLocation.value.details}, ${userLocation.value.country}. `
-        : ''
-
-      // Create API request
-      console.log('🚀 Creating API request with model:', {
+      console.log('🚀 Creating API request:', {
         selectedModel: selectedModel.value,
-        conversationId: conversationId.value,
+        threadId: currentThreadId.value || 'new thread',
         userId: userId.value,
-        hasImagesData: !!(imagesData && imagesData.length > 0),
-        imagesCount: imagesData?.length || 0,
         timestamp: new Date().toISOString()
       })
       
       const request = chatAPI.createRequest(
         userMessage,
-        conversationId.value!,
-        selectedModel.value || undefined,
-        locationContext,
-        userId.value || undefined,
-        imagesData,
-        createMode.value
+        currentThreadId.value,
+        userId.value,
+        selectedModel.value || undefined
       )
       
-      console.log('📤 Final API request payload:', {
-        query: request.query.substring(0, 50) + '...',
-        conversation_id: request.conversation_id,
-        model_id: request.model_id,
-        user_id: request.user_id,
-        hasImagesData: !!(request.images_data && request.images_data.length > 0),
-        imagesCount: request.images_data?.length || 0,
-        createMode: createMode.value
-      })
+      console.log('📤 Final API request payload:', JSON.stringify(request, null, 2))
 
-      // Add assistant message placeholder
-      const assistantMessage = chatAPI.createLoadingMessage(generateId())
-      messages.value.push(assistantMessage)
-
-      const assistantIndex = messages.value.length - 1
       let responseContent = ''
       isTyping.value = false
 
       // Handle tool starts
       const onToolStart = (toolData: any) => {
+        console.log('🔧 Tool start callback:', toolData)
         if (!messages.value[assistantIndex].tools) {
           messages.value[assistantIndex].tools = []
         }
-
         messages.value[assistantIndex].tools!.push(toolData)
-
-        // Auto-expand thinking section on first tool
         if (messages.value[assistantIndex].tools!.length === 1) {
           messages.value[assistantIndex].thinkingExpanded = true
         }
       }
 
       // Handle tool ends
-      const onToolEnd = (_toolName: string, chartSvg?: string) => {
-        if (chartSvg) {
-          // Add chart to the charts array
-          if (!messages.value[assistantIndex].charts) {
-            messages.value[assistantIndex].charts = []
-          }
-          messages.value[assistantIndex].charts!.push(chartSvg)
-        }
+      const onToolEnd = (_toolName: string) => {
+        console.log('✅ Tool end callback:', _toolName)
       }
 
       // Handle content chunks
       const onChunk = (content: string) => {
+        console.log('💬 Chunk callback:', content)
         responseContent += content
         messages.value[assistantIndex].content = responseContent
       }
 
-      // Handle generated images
-      const onImage = (imageUrl: string) => {
-        if (!messages.value[assistantIndex].generatedImages) {
-          messages.value[assistantIndex].generatedImages = []
-        }
-        messages.value[assistantIndex].generatedImages!.push(imageUrl)
-        console.log('🖼️ Image received:', imageUrl.substring(0, 50) + '...')
-      }
-
-      // Send message via API - use image endpoint if in create mode
+      console.log('🚀 Starting API call...')
+      
+      // Send message via API
       await chatAPI.sendMessage(
         request,
         onToolStart,
         onToolEnd,
         onChunk,
-        onImage,
-        abortController.value.signal,
-        createMode.value
+        abortController.value.signal
       )
+      
+      console.log('✅ API call completed')
 
       messages.value[assistantIndex].isLoading = false
 
-      // Generate title if this is the first user message
-      if (!currentChatTitle.value && messages.value.filter(m => m.role === 'user').length === 1) {
-        currentChatTitle.value = generateChatTitle()
+      // Update cache with new messages if we have a thread
+      if (currentThreadId.value) {
+        saveToCache(currentThreadId.value, [...messages.value])
       }
 
-      // Auto-save after response is complete
-      await saveCurrentChat()
+      // Reload threads to get the newly created thread (if this was first message)
+      if (!currentThreadId.value) {
+        await loadThreads()
+        // Try to find the new thread and set it as current
+        if (threads.value.length > 0) {
+          currentThreadId.value = threads.value[0].id
+          currentThreadTitle.value = threads.value[0].title || generateChatTitle()
+          // Cache the messages for the new thread
+          saveToCache(currentThreadId.value, [...messages.value])
+        }
+      }
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.warn('Request aborted')
+        console.warn('⚠️ Request aborted')
       } else {
-        console.error('Error in sendMessageToAPI:', error)
+        console.error('❌ Error in sendMessageToAPI:', error)
+        console.error('❌ Error stack:', error.stack)
         errorMessage.value = `Error: ${error.message}`
+        
+        // Remove loading message on error
+        if (messages.value[assistantIndex]) {
+          messages.value[assistantIndex].isLoading = false
+          messages.value[assistantIndex].content = 'Error: Failed to get response'
+        }
       }
     } finally {
+      console.log('🏁 Finally block - cleaning up')
       isLoading.value = false
       isTyping.value = false
       abortController.value = null
@@ -287,197 +430,111 @@ export const useChatStore = defineStore('chat', () => {
   // Actions
   const startNewChat = () => {
     console.log('🆕 Starting new chat:', {
-      previousChatId: currentChatId.value,
-      messageCount: messages.value.length,
-      createMode: createMode.value
+      previousThreadId: currentThreadId.value,
+      messageCount: messages.value.length
     })
 
-    // Save current chat before starting new one
-    if (currentChatId.value && messages.value.length > 0) {
-      saveCurrentChat()
-    }
-
-    currentChatId.value = generateId()
-    currentChatTitle.value = ''
-    resetConversation()
+    currentThreadId.value = null
+    currentThreadTitle.value = ''
+    messages.value = []
     errorMessage.value = ''
 
-    console.log('✅ New chat started:', { newChatId: currentChatId.value })
+    console.log('✅ New chat started')
   }
 
-  const loadChat = (chat: Chat) => {
-    console.log('🔄 Loading chat:', {
-      chatId: chat._id,
-      chatTitle: chat.title,
-      messageCount: chat.messages.length,
-      currentChatId: currentChatId.value,
-      createMode: createMode.value
+  const loadThread = async (thread: Thread, forceRefresh: boolean = false) => {
+    console.log('🔄 Loading thread:', {
+      threadId: thread.id,
+      threadTitle: thread.title,
+      currentThreadId: currentThreadId.value,
+      forceRefresh
     })
 
-    // Save current chat before switching
-    if (currentChatId.value && messages.value.length > 0) {
-      saveCurrentChat()
+    currentThreadId.value = thread.id
+    currentThreadTitle.value = thread.title || 'Untitled'
+
+    // Check cache first (unless forcing refresh)
+    if (!forceRefresh) {
+      const cached = getFromCache(thread.id)
+      if (cached) {
+        // Show cached messages immediately
+        messages.value = cached
+        console.log('⚡ Loaded from cache (instant):', {
+          currentThreadId: currentThreadId.value,
+          messagesLoaded: messages.value.length
+        })
+        
+        // Refresh in background to ensure we have latest data
+        loadThreadMessages(thread.id, true, true).catch(err => {
+          console.warn('Background refresh failed:', err)
+        })
+        return
+      }
     }
 
-    currentChatId.value = chat._id
-    currentChatTitle.value = chat.title
-    conversationId.value = chat.conversationId || uuidv4()
-    messages.value = chat.messages.map(msg => {
-      // Handle backward compatibility: convert old imageData to new imagesData format
-      let imagesData = msg.imagesData
-      if (!imagesData && msg.imageData) {
-        imagesData = [msg.imageData]
-      }
-      
-      return {
-        ...msg,
-        isLoading: false,
-        tools: msg.tools || [],
-        charts: msg.charts || [],
-        thinkingExpanded: msg.thinkingExpanded || false,
-        ...(imagesData && { imagesData }),
-        ...(msg.generatedImages && { generatedImages: msg.generatedImages })
-      }
-    })
+    // No cache available, load from API (cache will be updated automatically)
+    await loadThreadMessages(thread.id, true, false)
 
-    console.log('✅ Chat loaded successfully:', {
-      currentChatId: currentChatId.value,
+    console.log('✅ Thread loaded successfully:', {
+      currentThreadId: currentThreadId.value,
       messagesLoaded: messages.value.length
     })
   }
 
-  const saveCurrentChat = async () => {
-    if (!currentChatId.value || messages.value.length === 0 || isSaving.value) {
-      return
-    }
-
-    isSaving.value = true
+  const deleteThread = async (threadId: string) => {
+    if (!userId.value) return
 
     try {
-      const chatIndex = chatHistory.value.findIndex(chat => chat._id === currentChatId.value)
+      await chatAPI.deleteThread(threadId, userId.value)
       
-      // Compress images in messages before saving
-      const messagesWithCompressedImages = await Promise.all(
-        messages.value.map(async (msg) => {
-          const processedMsg: any = {
-            role: msg.role,
-            content: msg.content,
-            id: msg.id,
-            tools: msg.tools || [],
-            charts: msg.charts || [],
-            thinkingExpanded: msg.thinkingExpanded || false,
-            timestamp: msg.timestamp || new Date().toISOString()
-          }
+      // Remove from local state
+      threads.value = threads.value.filter(t => t.id !== threadId)
 
-          // Compress user-uploaded images
-          if (msg.imagesData && msg.imagesData.length > 0) {
-            try {
-              const originalSize = calculateTotalImageSize(msg.imagesData)
-              const compressedImages = await compressImages(msg.imagesData, {
-                maxWidth: 800,
-                maxHeight: 800,
-                quality: 0.6
-              })
-              const compressedSize = calculateTotalImageSize(compressedImages)
-              
-              console.log('🗜️ Compressed user images:', {
-                count: msg.imagesData.length,
-                originalMB: originalSize.toFixed(2),
-                compressedMB: compressedSize.toFixed(2),
-                savings: ((1 - compressedSize / originalSize) * 100).toFixed(1) + '%'
-              })
-              
-              processedMsg.imagesData = compressedImages
-            } catch (err) {
-              console.warn('Failed to compress user images, using originals:', err)
-              processedMsg.imagesData = msg.imagesData
-            }
-          }
+      // Update threads cache
+      ChatStorage.saveThreadsCache(userId.value, threads.value)
 
-          // Compress generated images
-          if (msg.generatedImages && msg.generatedImages.length > 0) {
-            try {
-              const originalSize = calculateTotalImageSize(msg.generatedImages)
-              const compressedImages = await compressImages(msg.generatedImages, {
-                maxWidth: 800,
-                maxHeight: 800,
-                quality: 0.6
-              })
-              const compressedSize = calculateTotalImageSize(compressedImages)
-              
-              console.log('🗜️ Compressed generated images:', {
-                count: msg.generatedImages.length,
-                originalMB: originalSize.toFixed(2),
-                compressedMB: compressedSize.toFixed(2),
-                savings: ((1 - compressedSize / originalSize) * 100).toFixed(1) + '%'
-              })
-              
-              processedMsg.generatedImages = compressedImages
-            } catch (err) {
-              console.warn('Failed to compress generated images, using originals:', err)
-              processedMsg.generatedImages = msg.generatedImages
-            }
-          }
+      // Clear from cache (both in-memory and localStorage)
+      messagesCache.delete(threadId)
+      cacheTimestamps.delete(threadId)
+      preloadingThreads.delete(threadId)
+      ChatStorage.removeMessagesCache(threadId)
 
-          return processedMsg
-        })
-      )
-
-      const chatData: Chat = {
-        _id: currentChatId.value,
-        title: currentChatTitle.value || generateChatTitle(),
-        messages: messagesWithCompressedImages,
-        conversationId: conversationId.value || uuidv4(),
-        createdAt: chatIndex === -1 ? new Date().toISOString() : chatHistory.value[chatIndex].createdAt,
-        updatedAt: new Date().toISOString()
-      }
-
-      if (chatIndex === -1) {
-        // New chat
-        chatHistory.value.unshift(chatData)
-      } else {
-        // Update existing chat
-        chatHistory.value[chatIndex] = chatData
-      }
-
-      // Update current title
-      currentChatTitle.value = chatData.title
-
-      // Save to localStorage
-      saveToStorage()
-    } catch (error) {
-      console.error('Error saving chat:', error)
-    } finally {
-      isSaving.value = false
-    }
-  }
-
-  const debouncedSaveChat = TextUtils.debounce(saveCurrentChat, CONFIG.SAVE_DEBOUNCE_MS)
-
-  const deleteChat = (chatId: string) => {
-    const index = chatHistory.value.findIndex(chat => chat._id === chatId)
-    if (index !== -1) {
-      chatHistory.value.splice(index, 1)
-      saveToStorage()
-
-      // If we deleted the current chat, start a new one
-      if (currentChatId.value === chatId) {
+      // If we deleted the current thread, start a new one
+      if (currentThreadId.value === threadId) {
         startNewChat()
       }
+      
+      console.log('✅ Thread deleted:', threadId)
+    } catch (error) {
+      console.error('Failed to delete thread:', error)
+      errorMessage.value = 'Failed to delete chat'
     }
   }
 
-  const renameChat = (chatId: string, newTitle: string) => {
-    const chatIndex = chatHistory.value.findIndex(chat => chat._id === chatId)
-    if (chatIndex !== -1) {
-      chatHistory.value[chatIndex].title = newTitle
-      chatHistory.value[chatIndex].updatedAt = new Date().toISOString()
-      saveToStorage()
+  const renameThread = async (threadId: string, newTitle: string) => {
+    if (!userId.value) return
 
-      // Update current title if this is the current chat
-      if (currentChatId.value === chatId) {
-        currentChatTitle.value = newTitle
+    try {
+      const updatedThread = await chatAPI.renameThread(threadId, userId.value, newTitle)
+      
+      // Update local state
+      const threadIndex = threads.value.findIndex(t => t.id === threadId)
+      if (threadIndex !== -1) {
+        threads.value[threadIndex] = updatedThread
       }
+
+      // Update threads cache
+      ChatStorage.saveThreadsCache(userId.value, threads.value)
+
+      // Update current title if this is the current thread
+      if (currentThreadId.value === threadId) {
+        currentThreadTitle.value = newTitle
+      }
+      
+      console.log('✅ Thread renamed:', threadId)
+    } catch (error) {
+      console.error('Failed to rename thread:', error)
+      errorMessage.value = 'Failed to rename chat'
     }
   }
 
@@ -486,6 +543,7 @@ export const useChatStore = defineStore('chat', () => {
       ...message,
       id: generateId(),
       timestamp: new Date().toISOString(),
+      thread_id: currentThreadId.value || undefined,
       tools: message.tools || [],
       charts: message.charts || [],
       thinkingExpanded: message.thinkingExpanded || false
@@ -493,13 +551,15 @@ export const useChatStore = defineStore('chat', () => {
 
     messages.value.push(newMessage)
 
-    // Generate title if this is the first user message
-    if (!currentChatTitle.value && message.role === 'user' && messages.value.filter(m => m.role === 'user').length === 1) {
-      currentChatTitle.value = generateChatTitle()
+    // Update cache if we have a thread
+    if (currentThreadId.value) {
+      saveToCache(currentThreadId.value, [...messages.value])
     }
 
-    // Auto-save after adding message (with debounce to avoid too frequent saves)
-    debouncedSaveChat()
+    // Generate title if this is the first user message
+    if (!currentThreadTitle.value && message.role === 'user' && messages.value.filter(m => m.role === 'user').length === 1) {
+      currentThreadTitle.value = generateChatTitle()
+    }
 
     return newMessage
   }
@@ -528,122 +588,123 @@ export const useChatStore = defineStore('chat', () => {
     return questions[Math.floor(Math.random() * questions.length)]
   }
 
+  // Preload messages for threads (background preloading)
+  const preloadThreads = async (threadIds: string[] = [], maxConcurrent: number = 3) => {
+    if (!userId.value) {
+      console.warn('Cannot preload threads: userId not set')
+      return
+    }
+
+    const currentUserId = userId.value // Store in local variable to satisfy type checker
+
+    // Use provided thread IDs or default to all threads
+    const threadsToPreload = threadIds.length > 0 
+      ? threadIds 
+      : threads.value.map(t => t.id)
+
+    // Filter out threads that are already cached or being preloaded
+    const threadsToLoad = threadsToPreload.filter(threadId => {
+      if (preloadingThreads.has(threadId)) {
+        return false // Already preloading
+      }
+      const cached = getFromCache(threadId)
+      if (cached) {
+        return false // Already cached
+      }
+      return true
+    })
+
+    if (threadsToLoad.length === 0) {
+      console.log('📦 All threads already cached or preloading')
+      return
+    }
+
+    console.log(`🚀 Preloading ${threadsToLoad.length} threads...`)
+
+    // Preload in batches to avoid overwhelming the API
+    for (let i = 0; i < threadsToLoad.length; i += maxConcurrent) {
+      const batch = threadsToLoad.slice(i, i + maxConcurrent)
+      
+      await Promise.allSettled(
+        batch.map(async (threadId) => {
+          preloadingThreads.add(threadId)
+          try {
+            const response = await chatAPI.getThreadMessages(threadId, currentUserId)
+            const convertedMessages = convertMessages(response.messages)
+            saveToCache(threadId, convertedMessages)
+            console.log(`✅ Preloaded thread: ${threadId} (${convertedMessages.length} messages)`)
+          } catch (error) {
+            console.warn(`⚠️ Failed to preload thread ${threadId}:`, error)
+          } finally {
+            preloadingThreads.delete(threadId)
+          }
+        })
+      )
+
+      // Small delay between batches to avoid rate limiting
+      if (i + maxConcurrent < threadsToLoad.length) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+    }
+
+    console.log('✅ Preloading complete')
+  }
+
+  // Clear cache (useful for debugging or forced refresh)
+  const clearCache = (threadId?: string) => {
+    if (threadId) {
+      messagesCache.delete(threadId)
+      cacheTimestamps.delete(threadId)
+      ChatStorage.removeMessagesCache(threadId)
+      console.log('🗑️ Cleared cache for thread:', threadId)
+    } else {
+      messagesCache.clear()
+      cacheTimestamps.clear()
+      // Note: Clearing all localStorage message caches would require iterating through all keys
+      // For now, we'll just clear in-memory cache. Individual thread caches will expire naturally.
+      console.log('🗑️ Cleared all in-memory cache')
+    }
+  }
+
   // Initialize
   const initialize = () => {
-    loadFromStorage()
+    console.log('🎬 Store initializing...')
     loadUserId()
+    console.log('👤 User ID after load:', userId.value)
     getUserLocation()
-    if (chatHistory.value.length === 0) {
-      // Add sample chats for UI testing
-      chatHistory.value = [
-        {
-          _id: 'sample-1',
-          title: 'Market Research Analysis',
-          messages: [
-            {
-              id: '1',
-              role: 'user',
-              content: 'What are the current trends in renewable energy markets?',
-              timestamp: new Date(Date.now() - 60000).toISOString(),
-              tools: [],
-              charts: [],
-              thinkingExpanded: false
-            },
-            {
-              id: '2',
-              role: 'assistant',
-              content: 'The renewable energy market is experiencing significant growth with several key trends:\n\n1. Solar energy continues to dominate with decreasing costs\n2. Wind energy adoption is accelerating globally\n3. Energy storage solutions are becoming more affordable\n4. Green hydrogen is emerging as a key technology\n5. Policy support is driving market expansion\n\nThese trends vary by region and are influenced by local policies and market conditions.',
-              timestamp: new Date(Date.now() - 30000).toISOString(),
-              tools: [],
-              charts: [],
-              thinkingExpanded: false
-            }
-          ],
-          conversationId: uuidv4(),
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          updatedAt: new Date(Date.now() - 30000).toISOString()
-        },
-        {
-          _id: 'sample-2',
-          title: 'Technology Trends',
-          messages: [
-            {
-              id: '3',
-              role: 'user',
-              content: 'What are the emerging technologies in artificial intelligence?',
-              timestamp: new Date(Date.now() - 3600000).toISOString(),
-              tools: [],
-              charts: [],
-              thinkingExpanded: false
-            },
-            {
-              id: '4',
-              role: 'assistant',
-              content: 'Emerging AI technologies include:\n\n1. Large Language Models (LLMs) with improved reasoning\n2. Multimodal AI systems combining text, image, and audio\n3. Edge AI for real-time processing\n4. AI-powered automation and robotics\n5. Explainable AI for transparency\n6. Federated learning for privacy-preserving AI\n\nThese technologies are rapidly evolving and finding applications across various industries.',
-              timestamp: new Date(Date.now() - 3300000).toISOString(),
-              tools: [],
-              charts: [],
-              thinkingExpanded: false
-            }
-          ],
-          conversationId: uuidv4(),
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-          updatedAt: new Date(Date.now() - 3300000).toISOString()
-        },
-        {
-          _id: 'sample-3',
-          title: 'Data Analysis',
-          messages: [
-            {
-              id: '5',
-              role: 'user',
-              content: 'How can I analyze customer satisfaction data effectively?',
-              timestamp: new Date(Date.now() - 7200000).toISOString(),
-              tools: [],
-              charts: [],
-              thinkingExpanded: false
-            },
-            {
-              id: '6',
-              role: 'assistant',
-              content: 'Effective customer satisfaction analysis involves:\n\n1. Collecting data through surveys, reviews, and feedback\n2. Using sentiment analysis to understand emotions\n3. Creating visualizations to identify patterns\n4. Segmenting customers by demographics or behavior\n5. Tracking satisfaction trends over time\n6. Correlating satisfaction with business metrics\n\nThis approach helps identify areas for improvement and measure the impact of changes.',
-              timestamp: new Date(Date.now() - 7000000).toISOString(),
-              tools: [],
-              charts: [],
-              thinkingExpanded: false
-            }
-          ],
-          conversationId: uuidv4(),
-          createdAt: new Date(Date.now() - 7200000).toISOString(),
-          updatedAt: new Date(Date.now() - 7000000).toISOString()
-        }
-      ]
-      saveToStorage()
+    
+    // Load threads if user ID is set
+    if (userId.value) {
+      console.log('📂 Loading threads for user:', userId.value)
+      loadThreads()
+    } else {
+      console.warn('⚠️ No user ID found, threads will not be loaded')
     }
+    
     startNewChat()
+    console.log('✅ Store initialized')
   }
 
   return {
     // State
     messages,
-    chatHistory,
-    currentChatId,
-    currentChatTitle,
+    threads,
+    currentThreadId,
+    currentThreadTitle,
     isLoading,
     isTyping,
     isThinking,
     errorMessage,
     abortController,
     selectedModel,
-    conversationId,
-    isSaving,
     userLocation,
     userId,
-    createMode,
+    isLoadingThreads,
+    isLoadingMessages,
 
     // Computed
     hasUserMessages,
-    currentChat,
+    currentThread,
 
     // Utils
     getLastMessage,
@@ -651,10 +712,11 @@ export const useChatStore = defineStore('chat', () => {
 
     // Actions
     startNewChat,
-    loadChat,
-    saveCurrentChat,
-    deleteChat,
-    renameChat,
+    loadThread,
+    loadThreads,
+    loadThreadMessages,
+    deleteThread,
+    renameThread,
     addMessage,
     updateMessage,
     toggleThinking,
@@ -665,6 +727,7 @@ export const useChatStore = defineStore('chat', () => {
     setUserId,
     loadUserId,
     setSelectedModel,
-    toggleCreateMode
+    preloadThreads,
+    clearCache
   }
 })

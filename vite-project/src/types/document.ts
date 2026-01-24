@@ -1,12 +1,17 @@
 export interface Document {
   doc_id: string
-  user_id: string
-  doc_name: string
-  summary: string
-  tags: string[]
+  file_type: 'document' | 'excel'
+  filename: string
   created_at: string
-  created_by: 'assistant' | 'upload'
-  page_range: string
+  content_preview: string | null
+  page_count: number | null
+  // Computed/mapped fields for backward compatibility
+  user_id?: string
+  doc_name?: string // mapped from filename
+  summary?: string // mapped from content_preview
+  tags?: string[] // empty array by default
+  created_by?: 'assistant' | 'upload' // inferred from file_type or null
+  page_range?: string // formatted from page_count
 }
 
 export interface DocumentDetail {
@@ -26,7 +31,10 @@ export interface DocumentDetail {
 }
 
 export interface DocumentListResponse {
-  documents: Document[]
+  items: Document[]
+  total_count: number
+  document_count: number
+  excel_count: number
 }
 
 export interface DocumentFilters {

@@ -51,27 +51,6 @@
               </div>
             </template>
             
-            <!-- Generated Images Section -->
-            <div v-if="generatedImageSources.length > 0" class="mt-4">
-              <div class="text-xs text-gray-500 mb-2">
-                Generated images:
-              </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div 
-                  v-for="(imageUrl, imageIndex) in generatedImageSources" 
-                  :key="`generated-${imageIndex}`"
-                  class="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden"
-                >
-                  <img 
-                    :src="imageUrl"
-                    :alt="`Generated image ${imageIndex + 1}`"
-                    class="w-full h-auto object-contain"
-                    style="max-height: 500px;"
-                  />
-                </div>
-              </div>
-            </div>
-            
             <!-- Unreferenced Charts Section (for after-message display) -->
             <div v-if="unreferencedCharts.length > 0" class="mt-4">
               <div class="text-xs text-gray-500 mb-2">
@@ -118,21 +97,6 @@
     <div v-else-if="message.role === 'user'" class="flex justify-end mb-6">
       <div class="max-w-2xl">
         <div class="bg-primary text-white p-4 rounded-xl rounded-br-none">
-          <!-- Attached Images (new format) -->
-          <div v-if="displayImages.length > 0" class="mb-3 space-y-2">
-            <div 
-              v-for="(imageData, index) in displayImages" 
-              :key="index"
-              class="flex justify-center"
-            >
-              <img 
-                :src="getImageDataUrl(imageData)"
-                alt="User uploaded image"
-                class="max-w-full h-auto rounded-lg border border-slate-300 shadow-sm"
-                style="max-height: 300px; object-fit: contain;"
-              />
-            </div>
-          </div>
           <!-- Message Content -->
           <p class="text-sm md:text-base leading-relaxed">{{ message.content }}</p>
         </div>
@@ -171,19 +135,6 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-// Compute display images with backward compatibility
-const displayImages = computed((): string[] => {
-  // New format: imagesData array
-  if (props.message.imagesData && props.message.imagesData.length > 0) {
-    return props.message.imagesData
-  }
-  // Old format: single imageData (backward compatibility)
-  if (props.message.imageData) {
-    return [props.message.imageData]
-  }
-  return []
-})
-
 // Parse message content into segments for rendering
 const contentSegments = computed((): ContentSegment[] => {
   return parseMessageContent(props.message.content)
@@ -220,55 +171,4 @@ const toggleThinking = () => {
 const copyMessage = async () => {
   emit('copy-message', props.message.content)
 }
-
-// Helper function to create proper data URL for images
-const getImageDataUrl = (base64Data: string): string => {
-  if (!base64Data) {
-    return ''
-  }
-
-  const trimmedData = base64Data.trim()
-
-  if (trimmedData.startsWith('data:')) {
-    return trimmedData
-  }
-
-  if (/^https?:\/\//i.test(trimmedData)) {
-    return trimmedData
-  }
-
-  // Try to detect format from base64 header
-  if (base64Data.startsWith('/9j/')) {
-    return `data:image/jpeg;base64,${base64Data}`
-  } else if (base64Data.startsWith('iVBORw0KGgo')) {
-    return `data:image/png;base64,${base64Data}`
-  } else if (base64Data.startsWith('UklGR')) {
-    return `data:image/webp;base64,${base64Data}`
-  } else if (base64Data.startsWith('R0lGODlh') || base64Data.startsWith('R0lGODdh')) {
-    return `data:image/gif;base64,${base64Data}`
-  } else {
-    // Default to jpeg if we can't detect the format
-    return `data:image/jpeg;base64,${base64Data}`
-  }
-}
-
-const normalizeImageSrc = (imageData: string): string => {
-  if (!imageData) {
-    return ''
-  }
-
-  const src = getImageDataUrl(imageData)
-  return src
-}
-
-// Normalize generated image sources for reliable display
-const generatedImageSources = computed((): string[] => {
-  if (!props.message.generatedImages || props.message.generatedImages.length === 0) {
-    return []
-  }
-
-  return props.message.generatedImages
-    .map(image => normalizeImageSrc(image))
-    .filter((image): image is string => Boolean(image))
-})
 </script>

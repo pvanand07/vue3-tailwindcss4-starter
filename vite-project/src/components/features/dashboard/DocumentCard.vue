@@ -7,12 +7,15 @@
       <!-- Header -->
       <div class="flex items-start justify-between">
         <div class="flex-1 min-w-0">
-          <h3 class="text-lg font-medium text-gray-900 line-clamp-2" :title="document.doc_name">
-            {{ document.doc_name }}
+          <h3 class="text-lg font-medium text-gray-900 line-clamp-2" :title="document.doc_name || document.filename">
+            {{ document.doc_name || document.filename }}
           </h3>
           <div class="mt-1 flex items-center space-x-2">
-            <span class="text-xs text-gray-500">
-              {{ getPageDisplay(document.page_range) }}
+            <span v-if="document.page_range || document.page_count !== null" class="text-xs text-gray-500">
+              {{ getPageDisplay(document.page_range || (document.page_count ? `1-${document.page_count}` : '')) }}
+            </span>
+            <span v-else class="text-xs text-gray-400 italic">
+              No page info
             </span>
           </div>
         </div>
@@ -27,11 +30,11 @@
       <!-- Summary -->
       <div class="mt-4">
         <p 
-          v-if="document.summary" 
+          v-if="document.summary || document.content_preview" 
           class="text-sm text-gray-600 line-clamp-4"
-          :title="document.summary"
+          :title="document.summary || document.content_preview || ''"
         >
-          {{ document.summary }}
+          {{ document.summary || document.content_preview }}
         </p>
         <p v-else class="text-sm text-gray-400 italic">
           No summary available
@@ -99,7 +102,8 @@ defineEmits<{
 }>()
 
 // Function to format page display
-const getPageDisplay = (pageRange: string) => {
+const getPageDisplay = (pageRange: string | undefined) => {
+  if (!pageRange) return ''
   if (pageRange.includes('-')) {
     const [start, end] = pageRange.split('-').map(Number)
     if (start === end) {

@@ -8,26 +8,6 @@
           {{ errorMessage }}
         </div>
         
-        <!-- Attached Images Preview -->
-        <div v-if="attachedImages.length > 0" class="mb-3 p-2 bg-slate-50 rounded-lg border border-slate-200">
-          <div class="flex flex-wrap gap-3">
-            <div v-for="(image, index) in attachedImages" :key="index" class="relative">
-              <img 
-                :src="image.preview" 
-                :alt="image.name"
-                class="w-16 h-16 object-cover rounded-md border border-slate-300"
-              />
-              <button
-                @click="removeAttachedImage(index)"
-                class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                aria-label="Remove image"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        </div>
-        
         <form @submit.prevent="handleSendMessage">
           <div>
             <!-- Text Input Container -->
@@ -39,7 +19,7 @@
                 :disabled="isLoading"
                 class="w-full bg-transparent p-2 text-slate-800 placeholder-slate-500 focus:outline-none resize-none scrollbar-thin"
                 rows="1"
-                :placeholder="createMode ? 'Describe what you want to create (optional with images)...' : 'Ask me anything about research, data analysis, or market trends...'"
+                placeholder="Ask me anything about research, data analysis, or market trends..."
                 maxlength="4000"
                 aria-label="Message input"
               ></textarea>
@@ -51,44 +31,12 @@
             
             <!-- Bottom Controls Row -->
             <div class="flex items-center justify-between mt-2">
-              <!-- Left: Image Upload, Create, Model -->
+              <!-- Left: Model Selection -->
               <div class="flex items-center gap-2">
-                <button type="button" class="flex items-center gap-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md px-3 py-1.5 flex-shrink-0 transition-colors" aria-label="Attach image">
-                  <input 
-                    type="file" 
-                    @change="handleImageUpload" 
-                    class="hidden" 
-                    id="image-upload" 
-                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
-                    ref="imageInput"
-                    multiple
-                  >
-                  <label for="image-upload" class="cursor-pointer flex items-center gap-2">
-                    <Plus class="w-4 h-4" />
-                    <span class="hidden sm:inline">Image{{ attachedImages.length > 0 ? ` (${attachedImages.length})` : '' }}</span>
-                  </label>
-                </button>
-                <button
-                  type="button"
-                  @click="$emit('toggle-create-mode')"
-                  :disabled="isLoading"
-                  :class="[
-                    'flex items-center gap-2 text-sm rounded-md px-3 py-1.5 disabled:cursor-not-allowed flex-shrink-0 transition-colors',
-                    createMode 
-                      ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                      : 'text-slate-600 hover:bg-slate-100'
-                  ]"
-                  :aria-label="createMode ? 'Switch to Chat mode' : 'Switch to Create mode'"
-                  :title="createMode ? 'Chat Mode' : 'Create Mode'"
-                >
-                  <Sparkles class="w-4 h-4" />
-                  <span class="hidden sm:inline">{{ createMode ? 'Creating' : 'Create' }}</span>
-                </button>
                 <select 
-                  v-if="!createMode"
                   :value="selectedModel" 
                   @change="handleModelChange"
-                  class="hidden sm:block text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer hover:bg-slate-100 rounded-md px-2 py-1 max-w-48"
+                  class="text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer hover:bg-slate-100 rounded-md px-2 py-1 max-w-48"
                   aria-label="Select AI Model"
                 >
                   <option value="openai/gpt-4.1">GPT-4.1</option>
@@ -104,7 +52,7 @@
               <div class="flex items-center">
                 <button
                   type="submit"
-                  :disabled="(!inputMessage.trim() && attachedImages.length === 0 && !isLoading) || isThinking || inputMessage.length > 4000"
+                  :disabled="(!inputMessage.trim() && !isLoading) || isThinking || inputMessage.length > 4000"
                   class="rounded-lg p-2 transition-colors flex-shrink-0"
                   :class="isLoading ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-primary text-white hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed'"
                   :aria-label="isLoading ? 'Stop generating' : 'Send message'"
@@ -130,17 +78,8 @@
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
-import { Plus, Sparkles, ArrowUp, Square } from 'lucide-vue-next'
-import { compressBase64Image } from '../../../utils/imageCompression'
-
-interface AttachedImage {
-  file: File
-  name: string
-  size: number
-  type: string
-  preview: string
-  base64: string
-}
+import { ArrowUp, Square } from 'lucide-vue-next'
+import { useChatStore } from '../../../stores/chat'
 
 interface Props {
   sidebarOpen: boolean
@@ -148,19 +87,18 @@ interface Props {
   isLoading: boolean
   isThinking: boolean
   selectedModel: string
-  createMode: boolean
 }
 
 interface Emits {
-  (e: 'send-message', data: { message: string; imagesData?: string[] }): void
-  (e: 'file-upload', file: File): void
-  (e: 'toggle-create-mode'): void
+  (e: 'send-message', message: string): void
   (e: 'update:selectedModel', value: string): void
   (e: 'cancel-request'): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+const chatStore = useChatStore()
 
 const handleModelChange = (event: Event) => {
   const target = event.target as HTMLSelectElement
@@ -172,72 +110,26 @@ const handleModelChange = (event: Event) => {
 // Local state
 const inputMessage = ref('')
 const messageInput = ref<HTMLTextAreaElement | null>(null)
-const imageInput = ref<HTMLInputElement | null>(null)
-const attachedImages = ref<AttachedImage[]>([])
-
-// Utility functions
-const convertFileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      // Remove the data URL prefix (data:image/jpeg;base64,)
-      const base64 = result.split(',')[1]
-      resolve(base64)
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
-const validateImageFile = (file: File): boolean => {
-  const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
-  const maxSize = 10 * 1024 * 1024 // 10MB
-
-  if (!allowedTypes.includes(file.type)) {
-    alert('Please select a valid image file (PNG, JPEG, WebP, or GIF)')
-    return false
-  }
-
-  if (file.size > maxSize) {
-    alert('Image file size must be less than 10MB')
-    return false
-  }
-
-  return true
-}
 
 // Handlers
-const handleSendMessage = () => {
+const handleSendMessage = async () => {
   // If loading, cancel the request
   if (props.isLoading) {
     emit('cancel-request')
     return
   }
   
-  // In create mode, require either message or images
-  if (props.createMode) {
-    if (!inputMessage.value.trim() && attachedImages.value.length === 0) {
-      return
-    }
-  } else {
-    // In chat mode, require at least a message
-    if (!inputMessage.value.trim() && attachedImages.value.length === 0) {
-      return
-    }
+  // Require at least a message
+  if (!inputMessage.value.trim()) {
+    return
   }
   
-  const message = inputMessage.value.trim() || (attachedImages.value.length > 0 ? (props.createMode ? 'Create images based on context' : 'Analyze these images') : '')
-  const imagesData = attachedImages.value.length > 0 ? attachedImages.value.map(img => img.base64) : undefined
+  const message = inputMessage.value.trim()
   
-  // Clear inputs
+  // Clear input
   inputMessage.value = ''
-  attachedImages.value = []
-  if (imageInput.value) {
-    imageInput.value.value = ''
-  }
   
-  emit('send-message', { message, imagesData })
+  emit('send-message', message)
 }
 
 const handleEnterKey = (event: KeyboardEvent) => {
@@ -247,75 +139,6 @@ const handleEnterKey = (event: KeyboardEvent) => {
   event.preventDefault()
   handleSendMessage()
 }
-
-const handleImageUpload = async (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const files = target.files
-  
-  if (!files || files.length === 0) return
-  
-  // Validate all files
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i]
-    if (!validateImageFile(file)) {
-      target.value = '' // Clear the input
-      return
-    }
-  }
-
-  try {
-    // Process all files
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const base64 = await convertFileToBase64(file)
-      const preview = URL.createObjectURL(file)
-      
-      // Compress the image before storing
-      let compressedBase64 = base64
-      try {
-        compressedBase64 = await compressBase64Image(base64, {
-          maxWidth: 1024,
-          maxHeight: 1024,
-          quality: 0.7
-        })
-        console.log('🗜️ Image compressed:', {
-          original: (base64.length * 0.75 / 1024).toFixed(2) + 'KB',
-          compressed: (compressedBase64.length * 0.75 / 1024).toFixed(2) + 'KB'
-        })
-      } catch (compressionError) {
-        console.warn('Failed to compress image, using original:', compressionError)
-      }
-      
-      attachedImages.value.push({
-        file,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        preview,
-        base64: compressedBase64
-      })
-    }
-  } catch (error) {
-    console.error('Error processing images:', error)
-    alert('Error processing images. Please try again.')
-    target.value = '' // Clear the input
-  }
-  
-  // Clear the input so the same files can be selected again if needed
-  target.value = ''
-}
-
-const removeAttachedImage = (index: number) => {
-  if (attachedImages.value[index]?.preview) {
-    URL.revokeObjectURL(attachedImages.value[index].preview)
-  }
-  attachedImages.value.splice(index, 1)
-  if (imageInput.value && attachedImages.value.length === 0) {
-    imageInput.value.value = ''
-  }
-}
-
-
 
 // Focus method for external use
 const focus = () => {

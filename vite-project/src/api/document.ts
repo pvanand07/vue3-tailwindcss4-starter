@@ -23,9 +23,10 @@ export class DocumentAPI {
    */
   async getUserDocuments(userId: string): Promise<Document[]> {
     try {
-      const response = await fetch(`${DOCUMENT_API_CONFIG.BASE_URL}/documents/${userId}`, {
+      const response = await fetch(`${DOCUMENT_API_CONFIG.BASE_URL}/documents?user_id=${userId}`, {
         method: 'GET',
         headers: {
+          'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
       })
@@ -35,9 +36,44 @@ export class DocumentAPI {
       }
 
       const data: DocumentListResponse = await response.json()
-      return data.documents
+      
+      // Map API response to Document format with backward compatibility fields
+      return data.items.map(item => ({
+        ...item,
+        user_id: userId,
+        doc_name: item.filename,
+        summary: item.content_preview || '',
+        tags: [],
+        created_by: item.file_type === 'excel' ? 'upload' : undefined, // Infer if possible
+        page_range: item.page_count !== null ? `1-${item.page_count}` : ''
+      }))
     } catch (error) {
       console.error('Error fetching user documents:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get documents list response with stats
+   */
+  async getUserDocumentsWithStats(userId: string): Promise<DocumentListResponse> {
+    try {
+      const response = await fetch(`${DOCUMENT_API_CONFIG.BASE_URL}/documents?user_id=${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch documents: ${response.status}`)
+      }
+
+      const data: DocumentListResponse = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error fetching documents with stats:', error)
       throw error
     }
   }
@@ -84,11 +120,14 @@ export class DocumentAPI {
     // Apply search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase()
-      filtered = filtered.filter(doc => 
-        doc.doc_name.toLowerCase().includes(searchLower) ||
-        doc.summary.toLowerCase().includes(searchLower) ||
-        doc.tags.some(tag => tag.toLowerCase().includes(searchLower))
-      )
+      filtered = filtered.filter(doc => {
+        const docName = (doc.doc_name || doc.filename || '').toLowerCase()
+        const summary = (doc.summary || doc.content_preview || '').toLowerCase()
+        const tags = doc.tags || []
+        return docName.includes(searchLower) ||
+          summary.includes(searchLower) ||
+          tags.some(tag => tag.toLowerCase().includes(searchLower))
+      })
     }
 
     // Apply created_by filter
@@ -98,23 +137,29 @@ export class DocumentAPI {
 
     // Apply tags filter
     if (filters.tags && filters.tags.length > 0) {
-      filtered = filtered.filter(doc => 
-        filters.tags!.some(tag => doc.tags.includes(tag))
-      )
+      filtered = filtered.filter(doc => {
+        const docTags = doc.tags || []
+        return filters.tags!.some(tag => docTags.includes(tag))
+      })
     }
 
     // Apply sorting
     if (filters.sortBy) {
+      const sortBy = filters.sortBy
       filtered.sort((a, b) => {
         let aValue: string | Date
         let bValue: string | Date
 
-        if (filters.sortBy === 'created_at') {
+        if (sortBy === 'created_at') {
           aValue = new Date(a.created_at)
           bValue = new Date(b.created_at)
+        } else if (sortBy === 'doc_name') {
+          aValue = (a.doc_name || a.filename || '').toLowerCase()
+          bValue = (b.doc_name || b.filename || '').toLowerCase()
         } else {
-          aValue = a[filters.sortBy!]
-          bValue = b[filters.sortBy!]
+          // Fallback for other sort fields
+          aValue = String((a as any)[sortBy] || '')
+          bValue = String((b as any)[sortBy] || '')
         }
 
         let comparison = 0
@@ -137,9 +182,39 @@ export class DocumentAPI {
   getAllTags(documents: Document[]): string[] {
     const tagSet = new Set<string>()
     documents.forEach(doc => {
-      doc.tags.forEach(tag => tagSet.add(tag))
+      const docTags = doc.tags || []
+      docTags.forEach(tag => tagSet.add(tag))
     })
     return Array.from(tagSet).sort()
+  }
+
+  /**
+   * Delete a document
+   */
+  async deleteDocument(userId: string, docId: string): Promise<{ message: string; file_type: string }> {
+    try {
+      const response = await fetch(`${DOCUMENT_API_CONFIG.BASE_URL}/documents/${docId}?user_id=${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.detail || `Document with doc_id '${docId}' not found for user '${userId}'`)
+        }
+        throw new Error(`Failed to delete document: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error deleting document:', error)
+      throw error
+    }
   }
 }
 

@@ -56,14 +56,20 @@ const calculateChartOffset = (messageIndex: number): number => {
 }
 
 // Message handling functions
-const handleSendMessage = async (data: { message: string; imagesData?: string[] }) => {
+const handleSendMessage = async (message: string) => {
+  console.log('🎬 handleSendMessage called:', message.substring(0, 50))
+  console.log('📊 Store state:', {
+    userId: chatStore.userId,
+    currentThreadId: chatStore.currentThreadId,
+    selectedModel: chatStore.selectedModel
+  })
+  
   chatStore.errorMessage = ''
   
   // Add user message
   chatStore.addMessage({
     role: 'user',
-    content: data.message,
-    imagesData: data.imagesData
+    content: message
   })
 
   chatStore.isTyping = true
@@ -71,8 +77,10 @@ const handleSendMessage = async (data: { message: string; imagesData?: string[] 
 
   scrollToBottom()
   
+  console.log('🚀 Calling sendMessageToAPI...')
   // Send message to API
-  await chatStore.sendMessageToAPI(data.message, data.imagesData)
+  await chatStore.sendMessageToAPI(message)
+  console.log('✅ sendMessageToAPI completed')
   scrollToBottom()
 }
 
@@ -82,10 +90,6 @@ const copyMessage = async (text: string) => {
   } catch (err) {
     console.error('Failed to copy text: ', err)
   }
-}
-
-const handleFileUpload = (file: File) => {
-  console.log('File selected:', file)
 }
 
 
@@ -116,7 +120,6 @@ onUnmounted(() => {
       <FloatingControls 
         :sidebar-open="uiStore.sidebarOpen"
         :selected-model="chatStore.selectedModel"
-        :create-mode="chatStore.createMode"
         @toggle-sidebar="uiStore.toggleSidebar"
         @start-new-chat="startNewChat"
         @update:selected-model="chatStore.setSelectedModel"
@@ -125,9 +128,9 @@ onUnmounted(() => {
       <!-- Chat Messages -->
       <main ref="chatMessages" class="flex-1 overflow-y-auto p-2 sm:p-4 md:p-8 scrollbar-thin pt-14">
         <div class="max-w-4xl mx-auto w-full space-y-4 sm:space-y-6 transition-all duration-300" :class="{ 'md:max-w-6xl': !uiStore.sidebarOpen }">
-          <!-- Current Chat Title -->
-          <div v-if="chatStore.currentChatTitle && chatStore.messages.length > 1" class="text-center mb-6">
-            <h1 class="text-xl sm:text-2xl font-semibold text-slate-700">{{ chatStore.currentChatTitle }}</h1>
+          <!-- Current Thread Title -->
+          <div v-if="chatStore.currentThreadTitle && chatStore.messages.length > 1" class="text-center mb-6">
+            <h1 class="text-xl sm:text-2xl font-semibold text-slate-700">{{ chatStore.currentThreadTitle }}</h1>
           </div>
 
           <!-- Empty State -->
@@ -158,10 +161,7 @@ onUnmounted(() => {
         :is-loading="chatStore.isLoading"
         :is-thinking="chatStore.isThinking"
         :selected-model="chatStore.selectedModel"
-        :create-mode="chatStore.createMode"
         @send-message="handleSendMessage"
-        @file-upload="handleFileUpload"
-        @toggle-create-mode="chatStore.toggleCreateMode"
         @update:selected-model="chatStore.setSelectedModel"
         @cancel-request="chatStore.cancelRequest"
       />

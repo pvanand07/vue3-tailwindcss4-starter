@@ -93,19 +93,14 @@ export class LocalStorage {
 
 // Chat-specific storage keys
 export const STORAGE_KEYS = {
-  CHAT_HISTORY: 'chat-history',
   USER_PREFERENCES: 'user-preferences',
-  UI_STATE: 'ui-state'
+  UI_STATE: 'ui-state',
+  THREADS_CACHE: 'threads-cache',
+  MESSAGES_CACHE: 'messages-cache'
 } as const
 
 // Convenience functions for chat storage
 export const ChatStorage = {
-  saveChatHistory: (history: any[]) => 
-    LocalStorage.save(STORAGE_KEYS.CHAT_HISTORY, history),
-  
-  loadChatHistory: (defaultValue: any[] = []) => 
-    LocalStorage.load(STORAGE_KEYS.CHAT_HISTORY, defaultValue),
-  
   saveUserPreferences: (preferences: Record<string, any>) => 
     LocalStorage.save(STORAGE_KEYS.USER_PREFERENCES, preferences),
   
@@ -116,5 +111,20 @@ export const ChatStorage = {
     LocalStorage.save(STORAGE_KEYS.UI_STATE, state),
   
   loadUIState: (defaultValue: Record<string, any> = {}) => 
-    LocalStorage.load(STORAGE_KEYS.UI_STATE, defaultValue)
+    LocalStorage.load(STORAGE_KEYS.UI_STATE, defaultValue),
+  
+  saveThreadsCache: (userId: string, threads: any[], timestamp: number = Date.now()) => 
+    LocalStorage.save(`${STORAGE_KEYS.THREADS_CACHE}-${userId}`, { threads, timestamp }),
+  
+  loadThreadsCache: (userId: string) => 
+    LocalStorage.load<{ threads: any[]; timestamp: number }>(`${STORAGE_KEYS.THREADS_CACHE}-${userId}`),
+  
+  saveMessagesCache: (threadId: string, messages: any[], timestamp: number = Date.now()) => 
+    LocalStorage.save(`${STORAGE_KEYS.MESSAGES_CACHE}-${threadId}`, { messages, timestamp }),
+  
+  loadMessagesCache: (threadId: string) => 
+    LocalStorage.load<{ messages: any[]; timestamp: number }>(`${STORAGE_KEYS.MESSAGES_CACHE}-${threadId}`),
+  
+  removeMessagesCache: (threadId: string) => 
+    LocalStorage.remove(`${STORAGE_KEYS.MESSAGES_CACHE}-${threadId}`)
 }

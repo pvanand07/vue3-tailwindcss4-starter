@@ -44,36 +44,38 @@
 
     <!-- History List -->
     <div class="flex-1 overflow-y-auto scrollbar-thin p-2">
-      <div v-if="chatStore.chatHistory.length === 0" class="text-center text-slate-400 mt-8">
+      <div v-if="chatStore.isLoadingThreads" class="text-center text-slate-400 mt-8">
+        <MessageCircle class="w-12 h-12 mx-auto mb-2 opacity-50 text-slate-400 animate-pulse" />
+        <p>Loading chats...</p>
+      </div>
+      
+      <div v-else-if="chatStore.threads.length === 0" class="text-center text-slate-400 mt-8">
         <MessageCircle class="w-12 h-12 mx-auto mb-2 opacity-50 text-slate-400" />
         <p>No chat history yet</p>
       </div>
       
-      <div v-for="chat in chatStore.chatHistory" :key="chat._id" class="mb-2 relative" :class="{'z-10': openDropdownId === chat._id}">
+      <div v-for="thread in chatStore.threads" :key="thread.id" class="mb-2 relative" :class="{'z-10': openDropdownId === thread.id}">
         <div 
-          @click="handleLoadChat(chat)"
+          @click="handleLoadThread(thread)"
           class="p-3 rounded-lg cursor-pointer border border-transparent group relative transition-all duration-200 hover:bg-slate-700 hover:translate-x-1"
-          :class="{ 'bg-slate-700 text-white': chatStore.currentChatId === chat._id }"
+          :class="{ 'bg-slate-700 text-white': chatStore.currentThreadId === thread.id }"
         >
           <div class="flex items-start justify-between">
             <div class="flex-1 min-w-0">
               <h3 class="font-medium text-sm truncate mb-1">
-                {{ chat.title || 'Untitled Chat' }}
+                {{ thread.title || 'Untitled Chat' }}
               </h3>
-              <p class="text-xs opacity-70 truncate">
-                {{ chatStore.getLastMessage(chat) }}
-              </p>
               <p class="text-xs opacity-50 mt-1">
-                {{ chatStore.formatDate(chat.updatedAt) }}
+                {{ chatStore.formatDate(thread.updated_at) }}
               </p>
             </div>
             <!-- Options Dropdown -->
             <div class="relative">
               <button 
-                @click.stop="toggleOptionsMenu(chat._id)"
+                @click.stop="toggleOptionsMenu(thread.id)"
                 class="p-1 opacity-0 group-hover:opacity-100 hover:bg-slate-600 hover:bg-opacity-50 rounded transition-all text-slate-300"
-                :class="{ 'opacity-100': openDropdownId === chat._id }"
-                :aria-label="`Options for ${chat.title || 'Untitled Chat'}`"
+                :class="{ 'opacity-100': openDropdownId === thread.id }"
+                :aria-label="`Options for ${thread.title || 'Untitled Chat'}`"
               >
                 <MoreHorizontal class="w-4 h-4" />
               </button>
@@ -81,18 +83,18 @@
               <!-- Dropdown Menu -->
               <Transition name="fade">
                 <div 
-                  v-if="openDropdownId === chat._id"
+                  v-if="openDropdownId === thread.id"
                   class="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-slate-200 py-1 min-w-[120px] z-50"
                 >
                   <button 
-                    @click.stop="handleRenameChat(chat)"
+                    @click.stop="handleRenameThread(thread)"
                     class="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700"
                   >
                     <Edit2 class="w-3 h-3" />
                     Rename
                   </button>
                   <button 
-                    @click.stop="handleDeleteChat(chat._id)"
+                    @click.stop="handleDeleteThread(thread.id)"
                     class="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
                   >
                     <Trash2 class="w-3 h-3" />
@@ -157,7 +159,7 @@
         
         <!-- Conversation Count -->
         <div class="text-xs text-slate-400">
-          <span>{{ chatStore.chatHistory.length }} conversation{{ chatStore.chatHistory.length !== 1 ? 's' : '' }}</span>
+          <span>{{ chatStore.threads.length }} conversation{{ chatStore.threads.length !== 1 ? 's' : '' }}</span>
         </div>
       </div>
     </div>
@@ -165,11 +167,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { Plus, X, MoreHorizontal, Edit2, Trash2, MessageCircle, FileText, Check } from 'lucide-vue-next'
 import { useChatStore } from '../../stores/chat'
 import { sanitizeUserId } from '../../utils/text'
-import type { Chat } from '../../types/chat'
+import type { Thread } from '../../types/chat'
 
 interface Props {
   isOpen: boolean
@@ -189,7 +191,8 @@ const chatStore = useChatStore()
 // Local state
 const openDropdownId = ref<string | null>(null)
 const isEditingUserId = ref(false)
-const userId = ref<string | null>(null)
+// Use computed to reactively get userId from store
+const userId = computed(() => chatStore.userId)
 const editingUserId = ref<string | null>(null)
 const userIdInput = ref<HTMLInputElement | null>(null)
 
@@ -205,15 +208,14 @@ const handleNewChat = () => {
   emit('chat-loaded')
 }
 
-const handleLoadChat = (chat: Chat) => {
-  console.log('📱 ChatSidebar: handleLoadChat called:', {
-    chatId: chat._id,
-    chatTitle: chat.title,
-    currentChatId: chatStore.currentChatId,
-    createMode: chatStore.createMode
+const handleLoadThread = async (thread: Thread) => {
+  console.log('📱 ChatSidebar: handleLoadThread called:', {
+    threadId: thread.id,
+    threadTitle: thread.title,
+    currentThreadId: chatStore.currentThreadId
   })
 
-  chatStore.loadChat(chat)
+  await chatStore.loadThread(thread)
   
   // Close sidebar on mobile after selection
   if (window.innerWidth < 768) {
@@ -222,31 +224,31 @@ const handleLoadChat = (chat: Chat) => {
   
   emit('chat-loaded')
 
-  console.log('📱 ChatSidebar: After loadChat, currentChatId:', chatStore.currentChatId)
+  console.log('📱 ChatSidebar: After loadThread, currentThreadId:', chatStore.currentThreadId)
 }
 
-const toggleOptionsMenu = (chatId: string) => {
-  openDropdownId.value = openDropdownId.value === chatId ? null : chatId
+const toggleOptionsMenu = (threadId: string) => {
+  openDropdownId.value = openDropdownId.value === threadId ? null : threadId
 }
 
-const handleRenameChat = (chat: Chat) => {
+const handleRenameThread = async (thread: Thread) => {
   openDropdownId.value = null
-  const newTitle = prompt('Enter new chat title:', chat.title)
-  if (!newTitle || newTitle === chat.title) return
+  const newTitle = prompt('Enter new chat title:', thread.title || '')
+  if (!newTitle || newTitle === thread.title) return
   
-  chatStore.renameChat(chat._id, newTitle)
+  await chatStore.renameThread(thread.id, newTitle)
 }
 
-const handleDeleteChat = (chatId: string) => {
+const handleDeleteThread = async (threadId: string) => {
   openDropdownId.value = null
   if (!confirm('Are you sure you want to delete this chat?')) return
   
-  chatStore.deleteChat(chatId)
+  await chatStore.deleteThread(threadId)
 }
 
 const startEditingUserId = () => {
   isEditingUserId.value = true
-  editingUserId.value = userId.value || ''
+  editingUserId.value = chatStore.userId || ''
   nextTick(() => {
     userIdInput.value?.focus()
   })
@@ -255,7 +257,6 @@ const startEditingUserId = () => {
 const saveUserId = () => {
   if (editingUserId.value) {
     const sanitized = sanitizeUserId(editingUserId.value)
-    userId.value = sanitized
     isEditingUserId.value = false
     chatStore.setUserId(sanitized)
   }
@@ -263,7 +264,7 @@ const saveUserId = () => {
 
 const cancelEditingUserId = () => {
   isEditingUserId.value = false
-  editingUserId.value = userId.value || ''
+  editingUserId.value = chatStore.userId || ''
 }
 
 // Lifecycle
@@ -272,9 +273,6 @@ onMounted(() => {
   document.addEventListener('click', () => {
     openDropdownId.value = null
   })
-
-  // Set initial user ID from store
-  userId.value = chatStore.userId
 })
 </script>
 
