@@ -1,17 +1,16 @@
 export interface Document {
   doc_id: string
-  file_type: 'document' | 'excel'
-  filename: string
+  user_id: string
+  doc_name: string
+  summary: string
+  tags: string[]
   created_at: string
-  content_preview: string | null
-  page_count: number | null
-  // Computed/mapped fields for backward compatibility
-  user_id?: string
-  doc_name?: string // mapped from filename
-  summary?: string // mapped from content_preview
-  tags?: string[] // empty array by default
-  created_by?: 'assistant' | 'upload' // inferred from file_type or null
-  page_range?: string // formatted from page_count
+  created_by: 'assistant'
+  page_range: string
+  filename?: string
+  content_preview?: string
+  file_type?: 'document' | 'excel'
+  page_count?: number | null
 }
 
 export interface DocumentDetail {
@@ -22,7 +21,7 @@ export interface DocumentDetail {
     summary: string
     tags: string[]
     created_at: string
-    created_by: 'assistant' | 'upload'
+    created_by: 'assistant'
     page_range: string
     applicability?: string
   }
@@ -31,7 +30,15 @@ export interface DocumentDetail {
 }
 
 export interface DocumentListResponse {
-  items: Document[]
+  documents?: Document[]
+  items: Array<{
+    doc_id: string
+    filename: string
+    content_preview?: string
+    file_type: 'document' | 'excel'
+    created_at: string
+    page_count: number | null
+  }>
   total_count: number
   document_count: number
   excel_count: number
@@ -39,7 +46,7 @@ export interface DocumentListResponse {
 
 export interface DocumentFilters {
   search: string
-  createdBy: 'assistant' | 'upload' | 'all'
+  createdBy: 'assistant' | 'all'
   tags: string[]
   sortBy: 'created_at' | 'doc_name'
   sortOrder: 'asc' | 'desc'

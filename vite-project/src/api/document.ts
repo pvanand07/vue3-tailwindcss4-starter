@@ -44,7 +44,7 @@ export class DocumentAPI {
         doc_name: item.filename,
         summary: item.content_preview || '',
         tags: [],
-        created_by: item.file_type === 'excel' ? 'upload' : undefined, // Infer if possible
+        created_by: 'assistant',
         page_range: item.page_count !== null ? `1-${item.page_count}` : ''
       }))
     } catch (error) {
@@ -109,7 +109,7 @@ export class DocumentAPI {
     documents: Document[], 
     filters: {
       search?: string
-      createdBy?: 'assistant' | 'upload' | 'all'
+      createdBy?: 'assistant' | 'all'
       tags?: string[]
       sortBy?: 'created_at' | 'doc_name'
       sortOrder?: 'asc' | 'desc'
@@ -145,21 +145,17 @@ export class DocumentAPI {
 
     // Apply sorting
     if (filters.sortBy) {
-      const sortBy = filters.sortBy
       filtered.sort((a, b) => {
         let aValue: string | Date
         let bValue: string | Date
 
-        if (sortBy === 'created_at') {
+        if (filters.sortBy === 'created_at') {
           aValue = new Date(a.created_at)
           bValue = new Date(b.created_at)
-        } else if (sortBy === 'doc_name') {
+        } else {
+          // Default to doc_name sorting
           aValue = (a.doc_name || a.filename || '').toLowerCase()
           bValue = (b.doc_name || b.filename || '').toLowerCase()
-        } else {
-          // Fallback for other sort fields
-          aValue = String((a as any)[sortBy] || '')
-          bValue = String((b as any)[sortBy] || '')
         }
 
         let comparison = 0

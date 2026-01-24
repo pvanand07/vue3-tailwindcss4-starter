@@ -34,7 +34,6 @@
         >
           <option value="all">All Sources</option>
           <option value="assistant">AI Generated</option>
-          <option value="upload">Uploaded</option>
         </select>
       </div>
 
@@ -74,7 +73,7 @@
               Search: "{{ localFilters.search }}"
             </span>
             <span v-if="localFilters.createdBy !== 'all'" class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
-              Source: {{ localFilters.createdBy === 'assistant' ? 'AI Generated' : 'Uploaded' }}
+              Source: AI Generated
             </span>
           </div>
         </div>

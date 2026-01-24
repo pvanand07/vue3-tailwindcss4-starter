@@ -35,8 +35,7 @@ export const useDocumentStore = defineStore('document', () => {
 
   const documentsByType = computed(() => {
     return {
-      assistant: documents.value.filter(doc => doc.created_by === 'assistant'),
-      upload: documents.value.filter(doc => doc.created_by === 'upload')
+      assistant: documents.value.filter(doc => doc.created_by === 'assistant')
     }
   })
 
@@ -48,7 +47,6 @@ export const useDocumentStore = defineStore('document', () => {
         document: documentStats.value.document_count,
         excel: documentStats.value.excel_count,
         assistant: documentsByType.value.assistant.length,
-        upload: documentsByType.value.upload.length,
         totalTags: availableTags.value.length
       }
     }
@@ -57,7 +55,6 @@ export const useDocumentStore = defineStore('document', () => {
       document: documents.value.filter(doc => doc.file_type === 'document').length,
       excel: documents.value.filter(doc => doc.file_type === 'excel').length,
       assistant: documentsByType.value.assistant.length,
-      upload: documentsByType.value.upload.length,
       totalTags: availableTags.value.length
     }
   })
@@ -83,7 +80,7 @@ export const useDocumentStore = defineStore('document', () => {
         doc_name: item.filename,
         summary: item.content_preview || '',
         tags: [],
-        created_by: item.file_type === 'excel' ? 'upload' : undefined,
+        created_by: 'assistant',
         page_range: item.page_count !== null ? `1-${item.page_count}` : ''
       }))
       

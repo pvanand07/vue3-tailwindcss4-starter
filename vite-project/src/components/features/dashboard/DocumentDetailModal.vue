@@ -26,18 +26,10 @@
               </h3>
               <div class="mt-2 flex items-center space-x-4">
                 <span 
-                  :class="[
-                    'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
-                    document.metadata.created_by === 'assistant' 
-                      ? 'bg-blue-100 text-blue-800' 
-                      : 'bg-green-100 text-green-800'
-                  ]"
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
                 >
-                  <component 
-                    :is="document.metadata.created_by === 'assistant' ? Bot : Upload" 
-                    class="w-4 h-4 mr-1" 
-                  />
-                  {{ document.metadata.created_by === 'assistant' ? 'AI Generated' : 'Uploaded' }}
+                  <Bot class="w-4 h-4 mr-1" />
+                  AI Generated
                 </span>
                 <span class="text-sm text-gray-500">
                   {{ document.metadata.page_range }} page{{ document.metadata.page_range.includes('-') ? 's' : '' }}
@@ -178,7 +170,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { X, Bot, Upload, Hash, Download, Share2, Maximize2, Minimize2 } from 'lucide-vue-next'
+import { X, Bot, Hash, Download, Share2, Maximize2, Minimize2 } from 'lucide-vue-next'
 import type { DocumentDetail } from '../../../types/document'
 import { formatDate } from '../../../utils/date'
 import MarkdownIt from 'markdown-it'
