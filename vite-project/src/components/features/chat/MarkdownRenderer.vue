@@ -51,27 +51,33 @@ const renderedMarkdown = computed(() => {
 @reference "../../../style.css";
 
 .markdown-content :deep(h1) {
-  @apply text-2xl font-bold text-[#0F172A] mt-6 mb-4 first:mt-0;
+  @apply text-2xl font-bold mt-6 mb-4 first:mt-0;
+  color: var(--color-text-primary);
 }
 
 .markdown-content :deep(h2) {
-  @apply text-xl font-bold text-[#0F172A] mt-5 mb-3 first:mt-0;
+  @apply text-xl font-bold mt-5 mb-3 first:mt-0;
+  color: var(--color-text-primary);
 }
 
 .markdown-content :deep(h3) {
-  @apply text-lg font-semibold text-[#0F172A] mt-4 mb-2 first:mt-0;
+  @apply text-lg font-semibold mt-4 mb-2 first:mt-0;
+  color: var(--color-text-primary);
 }
 
 .markdown-content :deep(h4) {
-  @apply text-base font-semibold text-[#0F172A] mt-3 mb-2 first:mt-0;
+  @apply text-base font-semibold mt-3 mb-2 first:mt-0;
+  color: var(--color-text-primary);
 }
 
 .markdown-content :deep(h5) {
-  @apply text-sm font-semibold text-[#0F172A] mt-3 mb-2 first:mt-0;
+  @apply text-sm font-semibold mt-3 mb-2 first:mt-0;
+  color: var(--color-text-primary);
 }
 
 .markdown-content :deep(h6) {
-  @apply text-sm font-medium text-[#475569] mt-3 mb-2 first:mt-0;
+  @apply text-sm font-medium mt-3 mb-2 first:mt-0;
+  color: var(--color-text-secondary);
 }
 
 .markdown-content :deep(p) {
@@ -95,15 +101,24 @@ const renderedMarkdown = computed(() => {
 }
 
 .markdown-content :deep(blockquote) {
-  @apply border-l-4 border-[#E5E7EB] pl-4 py-2 mb-4 italic text-[#475569] bg-[#F1F5F9];
+  @apply border-l-4 pl-4 py-2 mb-4 italic;
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+  background-color: var(--color-icon-bg);
 }
 
 .markdown-content :deep(a) {
-  @apply text-[#2F5BFF] hover:text-[#1E40FF] underline;
+  @apply underline;
+  color: var(--color-primary-blue);
+}
+
+.markdown-content :deep(a:hover) {
+  color: var(--color-primary-blue-hover);
 }
 
 .markdown-content :deep(strong) {
-  @apply font-semibold text-[#0F172A];
+  @apply font-semibold;
+  color: var(--color-text-primary);
 }
 
 .markdown-content :deep(em) {
@@ -111,19 +126,26 @@ const renderedMarkdown = computed(() => {
 }
 
 .markdown-content :deep(hr) {
-  @apply border-0 border-t border-[#E5E7EB] my-6;
+  @apply border-0 border-t my-6;
+  border-color: var(--color-border);
 }
 
 .markdown-content :deep(table) {
-  @apply w-full border-collapse border border-[#E5E7EB] mb-4;
+  @apply w-full border-collapse border mb-4;
+  border-color: var(--color-border);
 }
 
 .markdown-content :deep(th) {
-  @apply border border-[#E5E7EB] px-3 py-2 bg-[#F1F5F9] font-semibold text-left;
+  @apply border px-3 py-2 font-semibold text-left;
+  border-color: var(--color-border);
+  background-color: var(--color-icon-bg);
+  color: var(--color-text-primary);
 }
 
 .markdown-content :deep(td) {
-  @apply border border-[#E5E7EB] px-3 py-2;
+  @apply border px-3 py-2;
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
 }
 
 /* Code styling */
@@ -144,7 +166,9 @@ const renderedMarkdown = computed(() => {
 }
 
 .markdown-content :deep(.inline-code) {
-  @apply bg-[#F1F5F9] text-[#0F172A] px-1.5 py-0.5 rounded text-sm font-mono;
+  @apply px-1.5 py-0.5 rounded text-sm font-mono;
+  background-color: var(--color-icon-bg);
+  color: var(--color-text-primary);
 }
 
 /* Improve spacing for nested lists */

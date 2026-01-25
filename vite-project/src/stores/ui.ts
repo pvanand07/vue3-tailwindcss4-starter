@@ -66,6 +66,17 @@ export const useUIStore = defineStore('ui', () => {
     applyTheme()
   }
 
+  const toggleTheme = () => {
+    // Cycle through: light → dark → system → light
+    if (theme.value === 'light') {
+      setTheme('dark')
+    } else if (theme.value === 'dark') {
+      setTheme('system')
+    } else {
+      setTheme('light')
+    }
+  }
+
   const toggleCompactMode = () => {
     compactMode.value = !compactMode.value
     saveUIState()
@@ -185,6 +196,7 @@ export const useUIStore = defineStore('ui', () => {
     closeSidebar,
     openSidebar,
     setTheme,
+    toggleTheme,
     toggleCompactMode,
     toggleShowThinking,
     setLastActiveChat,

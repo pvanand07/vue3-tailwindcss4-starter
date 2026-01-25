@@ -3,20 +3,20 @@
   <div class="fixed top-2 left-2 z-50">
     <button 
       @click="$emit('toggle-sidebar')"
-      class="bg-white/80 backdrop-blur-lg border border-[#E5E7EB] rounded-lg p-3 shadow-lg hover:bg-white/90 transition-colors"
+      class="bg-[var(--color-surface)]/80 backdrop-blur-lg border border-[var(--color-border)] rounded-lg p-3 shadow-lg hover:bg-[var(--color-surface)]/90 transition-colors"
       :aria-label="sidebarOpen ? 'Close sidebar' : 'Open sidebar'"
     >
-      <PanelLeftOpen class="w-5 h-4 text-[#0F172A]" />
+      <PanelLeftOpen class="w-5 h-4 text-[var(--color-text-primary)]" />
     </button>
   </div>
   
   <div class="fixed top-2 right-2 z-50 flex gap-2">
     <button 
       @click="$emit('start-new-chat')"
-      class="bg-white/80 backdrop-blur-lg border border-[#E5E7EB] rounded-lg p-3 shadow-lg hover:bg-white/90 transition-colors"
+      class="bg-[var(--color-surface)]/80 backdrop-blur-lg border border-[var(--color-border)] rounded-lg p-3 shadow-lg hover:bg-[var(--color-surface)]/90 transition-colors"
       aria-label="Start new chat"
     >
-      <SquarePen class="w-5 h-4 text-[#0F172A]" />
+      <SquarePen class="w-5 h-4 text-[var(--color-text-primary)]" />
     </button>
   </div>
 
@@ -25,7 +25,7 @@
     <select 
       :value="selectedModel" 
       @change="handleModelChange"
-      class="bg-white/80 backdrop-blur-lg border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm text-[#475569] shadow-lg hover:bg-white/90 transition-colors focus:outline-none focus:ring-2 focus:ring-[#2F5BFF]"
+      class="bg-[var(--color-surface)]/80 backdrop-blur-lg border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[var(--color-text-secondary)] shadow-lg hover:bg-[var(--color-surface)]/90 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-blue)]"
       aria-label="Select AI Model"
     >
       <option value="openrouter/auto">Elevatics Auto</option>

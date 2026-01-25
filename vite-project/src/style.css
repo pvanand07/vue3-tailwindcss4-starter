@@ -2,41 +2,75 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   
-  /* Base Surfaces */
-  --color-app-bg: #EFF3F9;
-  --color-surface: #FFFFFF;
+  /* --- Base Surfaces (Light Mode Defaults - Google Style) --- */
+  --color-app-bg: #FFFFFF;
+  --color-surface: #F0F4F9; /* Light grey surface used in Google apps */
+  --color-sidebar: #F0F4F9;
   
-  /* Primary Brand Colors */
-  --color-primary-blue: #2F5BFF;
-  --color-primary-blue-hover: #1E40FF;
-  --color-secondary-blue: #A8B6FF;
-  --color-muted-blue: #E4E9FF;
+  /* --- Primary Brand Colors (Gemini Blue) --- */
+  --color-primary-blue: #1A73E8;
+  --color-primary-blue-hover: #1557B0;
+  --color-secondary-blue: #D2E3FC;
+  --color-muted-blue: #E8F0FE;
   
-  /* Text Colors */
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94A3B8;
+  /* --- Text Colors (High Contrast) --- */
+  --color-text-primary: #1F1F1F;
+  --color-text-secondary: #444746;
+  --color-text-muted: #767779;
   
-  /* Borders & Dividers */
-  --color-border: #E5E7EB;
-  --color-border-subtle: #F1F5F9;
+  /* --- Borders --- */
+  --color-border: #E0E3E7;
+  --color-border-subtle: #F0F4F9;
   
-  /* Status Colors */
-  --color-success: #22C55E;
-  --color-error: #EF4444;
+  /* --- Status --- */
+  --color-success: #1E8E3E;
+  --color-error: #D93025;
   
-  /* Icon Colors */
-  --color-icon-default: #64748B;
-  --color-icon-active: #2F5BFF;
-  --color-icon-bg: #F1F5F9;
+  /* --- Icons --- */
+  --color-icon-default: #444746;
+  --color-icon-active: #1A73E8;
+  --color-icon-bg: #E1E3E1;
   
-  /* Legacy compatibility */
-  --color-primary: #2F5BFF;
-  --color-secondary: #F1F5F9;
+  /* --- Legacy --- */
+  --color-primary: #1A73E8;
+  --color-secondary: #F0F4F9;
   
   --breakpoint-xs: 475px;
+}
+
+/* --- Dark Mode Overrides (Matches Reference Image) --- */
+.dark {
+  /* Base Surfaces 
+     Gemini uses #131314 for the main background and 
+     #1E1F20 for the sidebar/input surfaces.
+  */
+  --color-app-bg: #131314;     /* The deep dark background */
+  --color-surface: #1E1F20;    /* Input bar, suggestion chips, cards */
+  --color-sidebar: #1E1F20;    /* Sidebar background */
+  
+  /* Text Colors - Warmer whites, not blue-whites */
+  --color-text-primary: #E3E3E3; 
+  --color-text-secondary: #C4C7C5;
+  --color-text-muted: #8E918F;
+  
+  /* Borders - Much more subtle in dark mode */
+  --color-border: #444746;
+  --color-border-subtle: #282A2C;
+  
+  /* Icons */
+  --color-icon-default: #C4C7C5;
+  --color-icon-active: #A8C7FA; /* Google Blue Light */
+  --color-icon-bg: #333537;
+  
+  /* Brand Colors adapted for Dark Mode */
+  --color-primary-blue: #A8C7FA;
+  --color-primary-blue-hover: #8AB4F8;
+  
+  /* Legacy compatibility */
+  --color-primary: #A8C7FA;
+  --color-secondary: #1E1F20;
 }
 
 /* Custom styles */
@@ -46,30 +80,50 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - darker to blend in */
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
 }
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: transparent;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #94A3B8;
+  background: var(--color-border); /* Subtle grey */
   border-radius: 3px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #64748B;
+  background: var(--color-text-muted);
 }
 
 html, body {
   height: 100%;
-  background-color: #EFF3F9;
+  background-color: var(--color-app-bg);
+  color: var(--color-text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 textarea {
   box-sizing: border-box;
   max-height: calc(12 * 1.5em + 16px);
   overflow-y: auto;
+  /* Ensure textarea background matches the new surface color */
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid transparent; 
+}
+
+textarea:focus {
+    outline: none;
+    /* Often Gemini has a slight border on focus or just stays clean */
+    background-color: var(--color-surface);
+}
+
+/* Utility for the gradient text seen in "Hi Anand" */
+.text-gradient-gemini {
+  background: linear-gradient(to right, #4285F4, #9B72CB, #D96570);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Animation improvements */
@@ -80,7 +134,6 @@ textarea {
   opacity: 0;
 }
 
-/* Performance optimizations */
 .gpu-accelerated {
   transform: translateZ(0);
   will-change: transform;

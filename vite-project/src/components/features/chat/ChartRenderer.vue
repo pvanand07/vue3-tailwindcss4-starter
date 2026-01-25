@@ -1,5 +1,5 @@
 <template>
-  <div v-if="chartSvg" ref="chartContainer" class="chart-container my-4 p-4 bg-white rounded-lg shadow-sm">
+  <div v-if="chartSvg" ref="chartContainer" class="chart-container my-4 p-4 bg-[var(--color-surface)] rounded-lg shadow-sm border border-[var(--color-border)]">
     <div ref="chartWrapper" class="chart-wrapper"></div>
   </div>
 </template>
@@ -90,17 +90,17 @@ watch(() => props.chartSvg, () => {
 .chart-wrapper :deep(.title) {
   font-size: 16px;
   font-weight: 600;
-  fill: #0F172A;
+  fill: var(--color-text-primary);
 }
 
 .chart-wrapper :deep(.axis text) {
   font-size: 12px;
-  fill: #475569;
+  fill: var(--color-text-secondary);
 }
 
 .chart-wrapper :deep(.legend text) {
   font-size: 12px;
-  fill: #0F172A;
+  fill: var(--color-text-primary);
 }
 
 /* Chart colors - Bar chart */

@@ -7,16 +7,16 @@
   />
   
   <aside 
-    class="w-80 h-full flex flex-col z-50 fixed md:absolute md:left-0 bg-white text-[#0F172A] border-r border-[#E5E7EB] transition-transform duration-300 ease-in-out gpu-accelerated"
+    class="w-80 h-full flex flex-col z-50 fixed md:absolute md:left-0 bg-[var(--color-sidebar)] text-[var(--color-text-primary)] border-r border-[var(--color-border)] transition-all duration-300 ease-in-out gpu-accelerated"
     :class="{ '-translate-x-full': !isOpen }"
   >
     <!-- Sidebar Header -->
-    <div class="p-4 border-b border-[#E5E7EB]">
+    <div class="p-4 border-b border-[var(--color-border)]">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-[#0F172A] text-center w-full">XY-Intelligence</h2>
+        <h2 class="text-lg font-semibold text-[var(--color-text-primary)] text-center w-full">XY-Intelligence</h2>
         <button 
           @click="$emit('close')"
-          class="md:hidden p-1 hover:bg-[#F1F5F9] rounded text-[#64748B] hover:text-[#0F172A]"
+          class="md:hidden p-1 hover:bg-[var(--color-icon-bg)] rounded text-[var(--color-icon-default)] hover:text-[var(--color-text-primary)] transition-colors"
           aria-label="Close sidebar"
         >
           <X class="w-5 h-5" />
@@ -25,7 +25,7 @@
       <div class="space-y-2">
         <button 
           @click="handleNewChat"
-          class="w-full bg-[#2F5BFF] text-white py-2 px-4 rounded-lg hover:bg-[#1E40FF] transition-colors flex items-center gap-2"
+          class="w-full bg-[var(--color-primary-blue)] text-white py-2 px-4 rounded-lg hover:bg-[var(--color-primary-blue-hover)] transition-colors flex items-center gap-2"
           aria-label="Start new chat"
         >
           <Plus class="w-4 h-4" />
@@ -33,7 +33,7 @@
         </button>
         <router-link
           to="/dashboard"
-          class="w-full bg-[#F1F5F9] text-[#0F172A] py-2 px-4 rounded-lg hover:bg-[#E4E9FF] transition-colors flex items-center gap-2"
+          class="w-full bg-[var(--color-icon-bg)] text-[var(--color-text-primary)] py-2 px-4 rounded-lg hover:bg-[var(--color-muted-blue)] transition-colors flex items-center gap-2"
           @click="$emit('close')"
         >
           <FileText class="w-4 h-4" />
@@ -44,21 +44,21 @@
 
     <!-- History List -->
     <div class="flex-1 overflow-y-auto scrollbar-thin p-2">
-      <div v-if="chatStore.isLoadingThreads" class="text-center text-[#94A3B8] mt-8">
-        <MessageCircle class="w-12 h-12 mx-auto mb-2 opacity-50 text-[#94A3B8] animate-pulse" />
+      <div v-if="chatStore.isLoadingThreads" class="text-center text-[var(--color-text-muted)] mt-8">
+        <MessageCircle class="w-12 h-12 mx-auto mb-2 opacity-50 text-[var(--color-text-muted)] animate-pulse" />
         <p>Loading chats...</p>
       </div>
       
-      <div v-else-if="chatStore.threads.length === 0" class="text-center text-[#94A3B8] mt-8">
-        <MessageCircle class="w-12 h-12 mx-auto mb-2 opacity-50 text-[#94A3B8]" />
+      <div v-else-if="chatStore.threads.length === 0" class="text-center text-[var(--color-text-muted)] mt-8">
+        <MessageCircle class="w-12 h-12 mx-auto mb-2 opacity-50 text-[var(--color-text-muted)]" />
         <p>No chat history yet</p>
       </div>
       
       <div v-for="thread in chatStore.threads" :key="thread.id" class="mb-2 relative" :class="{'z-10': openDropdownId === thread.id}">
         <div 
           @click="handleLoadThread(thread)"
-          class="p-3 rounded-lg cursor-pointer border border-transparent group relative transition-all duration-200 hover:bg-[#F1F5F9] hover:translate-x-1"
-          :class="{ 'bg-[#E4E9FF] text-[#2F5BFF]': chatStore.currentThreadId === thread.id }"
+          class="p-3 rounded-lg cursor-pointer border border-transparent group relative transition-all duration-200 hover:bg-[var(--color-icon-bg)] hover:translate-x-1"
+          :class="{ 'bg-[var(--color-muted-blue)] text-[var(--color-primary-blue)] dark:bg-[var(--color-icon-bg)] dark:text-[var(--color-icon-active)]': chatStore.currentThreadId === thread.id }"
         >
           <div class="flex items-start justify-between">
             <div class="flex-1 min-w-0">
@@ -92,7 +92,7 @@
               <button 
                 v-else
                 @click.stop="showDeleteConfirm(thread.id)"
-                class="p-1 opacity-0 group-hover:opacity-100 hover:bg-[#F1F5F9] rounded transition-all text-[#64748B]"
+                class="p-1 opacity-0 group-hover:opacity-100 hover:bg-[var(--color-icon-bg)] rounded transition-all text-[var(--color-icon-default)]"
                 :class="{ 'opacity-100': deleteConfirmId === thread.id }"
                 :aria-label="`Delete ${thread.title || 'Untitled Chat'}`"
               >
@@ -100,7 +100,7 @@
               </button>
               <button 
                 @click.stop="toggleOptionsMenu(thread.id)"
-                class="p-1 opacity-0 group-hover:opacity-100 hover:bg-[#F1F5F9] rounded transition-all text-[#64748B]"
+                class="p-1 opacity-0 group-hover:opacity-100 hover:bg-[var(--color-icon-bg)] rounded transition-all text-[var(--color-icon-default)]"
                 :class="{ 'opacity-100': openDropdownId === thread.id }"
                 :aria-label="`Options for ${thread.title || 'Untitled Chat'}`"
               >
@@ -111,11 +111,11 @@
               <Transition name="fade">
                 <div 
                   v-if="openDropdownId === thread.id"
-                  class="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[120px] z-50"
+                  class="absolute right-0 top-8 bg-[var(--color-surface)] rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[120px] z-50"
                 >
                   <button 
                     @click.stop="handleRenameThread(thread)"
-                    class="w-full px-3 py-2 text-left text-sm hover:bg-[#F1F5F9] flex items-center gap-2 text-[#0F172A]"
+                    class="w-full px-3 py-2 text-left text-sm hover:bg-[var(--color-icon-bg)] flex items-center gap-2 text-[var(--color-text-primary)]"
                   >
                     <Edit2 class="w-3 h-3" />
                     Rename
@@ -129,20 +129,37 @@
     </div>
 
     <!-- Sidebar Footer -->
-    <div class="p-4 border-t border-[#E5E7EB]">
+    <div class="p-4 border-t border-[var(--color-border)]">
       <div class="flex flex-col items-center space-y-2">
+        <!-- Theme Toggle -->
+        <div class="w-full flex items-center justify-center mb-2">
+          <button
+            @click="uiStore.toggleTheme()"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm bg-[var(--color-icon-bg)] hover:bg-[var(--color-muted-blue)] text-[var(--color-text-primary)]"
+            :aria-label="`Current theme: ${uiStore.theme}. Click to toggle theme`"
+            :title="`Theme: ${uiStore.theme === 'system' ? 'System' : uiStore.theme === 'dark' ? 'Dark' : 'Light'}`"
+          >
+            <Sun v-if="uiStore.theme === 'light'" class="w-4 h-4" />
+            <Moon v-else-if="uiStore.theme === 'dark'" class="w-4 h-4" />
+            <Monitor v-else class="w-4 h-4" />
+            <span class="text-xs font-medium">
+              {{ uiStore.theme === 'system' ? 'System' : uiStore.theme === 'dark' ? 'Dark' : 'Light' }}
+            </span>
+          </button>
+        </div>
+        
         <!-- User ID Display/Edit -->
         <div class="w-full">
           <div v-if="!isEditingUserId" class="flex items-center justify-center">
-            <span v-if="userId" class="text-sm text-[#475569] font-mono">
+            <span v-if="userId" class="text-sm text-[var(--color-text-secondary)] font-mono">
               {{ userId }}
             </span>
-            <span v-else class="text-xs text-[#94A3B8]">
+            <span v-else class="text-xs text-[var(--color-text-muted)]">
               User ID not set
             </span>
             <button 
               @click="startEditingUserId"
-              class="ml-2 p-1 hover:bg-[#F1F5F9] rounded text-[#64748B] hover:text-[#2F5BFF] transition-colors"
+              class="ml-2 p-1 hover:bg-[var(--color-icon-bg)] rounded text-[var(--color-icon-default)] hover:text-[var(--color-icon-active)] transition-colors"
               aria-label="Edit user ID"
             >
               <Edit2 class="w-3 h-3" />
@@ -159,33 +176,33 @@
                 @input="userIdError = null"
                 type="email"
                 placeholder="Enter email address"
-                class="flex-1 px-2 py-1 text-sm bg-white border rounded text-[#0F172A] placeholder-[#94A3B8] focus:outline-none transition-colors"
-                :class="userIdError ? 'border-[#EF4444] focus:border-[#EF4444]' : 'border-[#E5E7EB] focus:border-[#2F5BFF]'"
+                class="flex-1 px-2 py-1 text-sm bg-[var(--color-surface)] border rounded text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)] focus:outline-none transition-colors"
+                :class="userIdError ? 'border-[var(--color-error)] focus:border-[var(--color-error)]' : 'border-[var(--color-border)] focus:border-[var(--color-primary-blue)]'"
                 ref="userIdInput"
               />
               <button 
                 @click="saveUserId"
-                class="p-1 bg-[#22C55E] hover:bg-[#16A34A] rounded text-white transition-colors"
+                class="p-1 bg-[var(--color-success)] hover:opacity-90 rounded text-white transition-colors"
                 aria-label="Save user ID"
               >
                 <Check class="w-3 h-3" />
               </button>
               <button 
                 @click="cancelEditingUserId"
-                class="p-1 bg-[#F1F5F9] hover:bg-[#E5E7EB] rounded text-[#64748B] hover:text-[#0F172A] transition-colors"
+                class="p-1 bg-[var(--color-icon-bg)] hover:opacity-80 rounded text-[var(--color-icon-default)] hover:text-[var(--color-text-primary)] transition-colors"
                 aria-label="Cancel editing"
               >
                 <X class="w-3 h-3" />
               </button>
             </div>
-            <div v-if="userIdError" class="text-xs text-[#EF4444] px-2">
+            <div v-if="userIdError" class="text-xs text-[var(--color-error)] px-2">
               {{ userIdError }}
             </div>
           </div>
         </div>
         
         <!-- Conversation Count -->
-        <div class="text-xs text-[#94A3B8]">
+        <div class="text-xs text-[var(--color-text-muted)]">
           <span>{{ chatStore.threads.length }} conversation{{ chatStore.threads.length !== 1 ? 's' : '' }}</span>
         </div>
       </div>
@@ -195,8 +212,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { Plus, X, MoreHorizontal, Edit2, Trash2, MessageCircle, FileText, Check } from 'lucide-vue-next'
+import { Plus, X, MoreHorizontal, Edit2, Trash2, MessageCircle, FileText, Check, Sun, Moon, Monitor } from 'lucide-vue-next'
 import { useChatStore } from '../../stores/chat'
+import { useUIStore } from '../../stores/ui'
 import { sanitizeUserId } from '../../utils/text'
 import type { Thread } from '../../types/chat'
 
@@ -212,8 +230,9 @@ interface Emits {
 defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-// Use chat store
+// Use stores
 const chatStore = useChatStore()
+const uiStore = useUIStore()
 
 // Local state
 const openDropdownId = ref<string | null>(null)
@@ -335,14 +354,14 @@ onMounted(() => {
   width: 6px;
 }
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: var(--color-border-subtle);
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #94A3B8;
+  background: var(--color-text-muted);
   border-radius: 3px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #64748B;
+  background: var(--color-icon-default);
 }
 
 /* Animation improvements */
