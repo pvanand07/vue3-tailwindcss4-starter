@@ -351,8 +351,19 @@ export const useChatStore = defineStore('chat', () => {
       }
 
       // Handle tool ends
-      const onToolEnd = (_toolName: string) => {
-        console.log('✅ Tool end callback:', _toolName)
+      const onToolEnd = (toolName: string, output?: string, artifactsData?: any) => {
+        console.log('✅ Tool end callback:', toolName, artifactsData ? 'with artifacts' : '')
+        
+        // Store tool_end event with artifacts_data
+        if (!messages.value[assistantIndex].tool_events) {
+          messages.value[assistantIndex].tool_events = []
+        }
+        messages.value[assistantIndex].tool_events!.push({
+          type: 'tool_end',
+          name: toolName,
+          output: output,
+          artifacts_data: artifactsData
+        })
       }
 
       // Handle content chunks

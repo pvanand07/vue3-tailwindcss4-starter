@@ -1,4 +1,4 @@
-import type { ChatMessage, Thread, ThreadListResponse, ThreadMessagesResponse } from '../types/chat'
+import type { ChatMessage, Thread, ThreadListResponse, ThreadMessagesResponse, ArtifactsData } from '../types/chat'
 
 // API Configuration
 export const API_CONFIG = {
@@ -24,6 +24,7 @@ export interface ChatStreamEvent {
   reasoning?: string
   content?: string
   output?: string
+  artifacts_data?: ArtifactsData
 }
 
 export interface ChatToolData {
@@ -49,7 +50,7 @@ export class ChatAPI {
   async sendMessage(
     request: ChatRequest,
     onToolStart: (tool: ChatToolData) => void,
-    onToolEnd: (toolName: string) => void,
+    onToolEnd: (toolName: string, output?: string, artifactsData?: ArtifactsData) => void,
     onChunk: (content: string) => void,
     signal?: AbortSignal
   ): Promise<void> {
@@ -146,8 +147,8 @@ export class ChatAPI {
               })
             } else if (eventData.type === 'tool_end') {
               const toolName = eventData.name || 'Unknown Tool'
-              console.log('✅ Tool ended:', toolName)
-              onToolEnd(toolName)
+              console.log('✅ Tool ended:', toolName, eventData.artifacts_data ? 'with artifacts' : '')
+              onToolEnd(toolName, eventData.output, eventData.artifacts_data)
             } else if (eventData.type === 'chunk' && eventData.content) {
               console.log('💬 Chunk received:', {
                 length: eventData.content.length,

@@ -35,6 +35,15 @@
           <div class="text-[var(--color-text-primary)] max-w-full w-full">
             <MarkdownRenderer :content="message.content" />
             
+            <!-- Plotly Visualizations -->
+            <div v-if="visualizations.length > 0" class="visualizations-container">
+              <PlotlyChart 
+                v-for="viz in visualizations" 
+                :key="viz.id" 
+                :plotly-fig-json="viz.json"
+              />
+            </div>
+            
             <!-- Stop Streaming Button -->
             <div v-if="message.isLoading" class="mt-3">
               <button 
@@ -87,8 +96,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { ThumbsUp, ThumbsDown, Copy, Share2, Square } from 'lucide-vue-next'
 import MarkdownRenderer from './MarkdownRenderer.vue'
+import PlotlyChart from './PlotlyChart.vue'
 import type { ChatMessage } from '../../../types/chat'
 
 interface Props {
@@ -104,6 +115,24 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+// Extract visualizations from tool_events
+const visualizations = computed(() => {
+  if (!props.message.tool_events) {
+    return []
+  }
+  
+  return props.message.tool_events
+    .filter(event => 
+      event.type === 'tool_end' && 
+      event.artifacts_data?.artifact_type === 'application/vnd.plotly.v1+json' &&
+      event.artifacts_data?.plotly_fig_json
+    )
+    .map(event => ({
+      id: event.artifacts_data!.artifact_id,
+      json: event.artifacts_data!.plotly_fig_json!
+    }))
+})
 
 const toggleThinking = () => {
   emit('toggle-thinking', props.messageIndex)

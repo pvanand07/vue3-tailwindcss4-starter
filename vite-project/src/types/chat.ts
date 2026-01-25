@@ -4,11 +4,18 @@ export interface ChatTool {
   reasoning?: string
 }
 
+export interface ArtifactsData {
+  artifact_id: string
+  artifact_type: string
+  plotly_fig_json?: string
+}
+
 export interface ToolEvent {
   type: 'tool_start' | 'tool_end'
   name: string
   input?: any
   output?: string
+  artifacts_data?: ArtifactsData
 }
 
 export interface ChatMessage {
