@@ -57,7 +57,7 @@
       <div v-for="thread in chatStore.threads" :key="thread.id" class="mb-2 relative" :class="{'z-10': openDropdownId === thread.id}">
         <div 
           @click="handleLoadThread(thread)"
-          class="p-3 rounded-lg cursor-pointer border border-transparent group relative transition-all duration-200 hover:bg-[var(--color-icon-bg)] hover:translate-x-1"
+          class="p-3 rounded-lg cursor-pointer border border-transparent group relative transition-all duration-200 hover:bg-[var(--color-icon-bg)] hover:text-[var(--color-primary-blue)] hover:translate-x-1"
           :class="{ 'bg-[var(--color-muted-blue)] text-[var(--color-primary-blue)] dark:bg-[var(--color-icon-bg)] dark:text-[var(--color-icon-active)]': chatStore.currentThreadId === thread.id }"
         >
           <div class="flex items-start justify-between">

@@ -10,10 +10,10 @@
   --color-sidebar: #F0F4F9;
   
   /* --- Primary Brand Colors (Gemini Blue) --- */
-  --color-primary-blue: #1A73E8;
-  --color-primary-blue-hover: #1557B0;
+  --color-primary-blue: #50522c;
+  --color-primary-blue-hover: #3d3f22;
   --color-secondary-blue: #D2E3FC;
-  --color-muted-blue: #E8F0FE;
+  --color-muted-blue: #E8E6D8;
   
   /* --- Text Colors (High Contrast) --- */
   --color-text-primary: #1F1F1F;
@@ -34,7 +34,7 @@
   --color-icon-bg: #E1E3E1;
   
   /* --- Legacy --- */
-  --color-primary: #1A73E8;
+  --color-primary: #50522c;
   --color-secondary: #F0F4F9;
   
   --breakpoint-xs: 475px;
@@ -65,11 +65,12 @@
   --color-icon-bg: #333537;
   
   /* Brand Colors adapted for Dark Mode */
-  --color-primary-blue: #A8C7FA;
-  --color-primary-blue-hover: #8AB4F8;
+  --color-primary-blue: #50522c;
+  --color-primary-blue-hover: #6b6d3a;
+  --color-muted-blue: #3a3c25;
   
   /* Legacy compatibility */
-  --color-primary: #A8C7FA;
+  --color-primary: #50522c;
   --color-secondary: #1E1F20;
 }
 
