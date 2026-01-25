@@ -43,18 +43,6 @@ const toggleThinking = (messageIndex: number) => {
   chatStore.toggleThinking(messageIndex)
 }
 
-// Calculate cumulative chart offset for each message
-const calculateChartOffset = (messageIndex: number): number => {
-  let offset = 0
-  for (let i = 0; i < messageIndex; i++) {
-    const message = chatStore.messages[i]
-    if (message.charts && message.charts.length > 0) {
-      offset += message.charts.length
-    }
-  }
-  return offset
-}
-
 // Message handling functions
 const handleSendMessage = async (message: string) => {
   console.log('🎬 handleSendMessage called:', message.substring(0, 50))
@@ -142,7 +130,6 @@ onUnmounted(() => {
             :key="message.id"
             :message="message"
             :message-index="index"
-            :chart-offset="calculateChartOffset(index)"
             @toggle-thinking="toggleThinking"
             @copy-message="copyMessage"
             @cancel-request="chatStore.cancelRequest"

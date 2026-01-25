@@ -115,7 +115,6 @@ export const useChatStore = defineStore('chat', () => {
         reasoning: ''
       })) || [],
       tool_events: msg.tool_events || [],
-      charts: [],
       thinkingExpanded: false,
       isLoading: false
     }))
@@ -545,7 +544,6 @@ export const useChatStore = defineStore('chat', () => {
       timestamp: new Date().toISOString(),
       thread_id: currentThreadId.value || undefined,
       tools: message.tools || [],
-      charts: message.charts || [],
       thinkingExpanded: message.thinkingExpanded || false
     }
 

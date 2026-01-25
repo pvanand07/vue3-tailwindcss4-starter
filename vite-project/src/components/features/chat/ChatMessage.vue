@@ -31,35 +31,9 @@
             </div>
           </div>
 
-          <!-- Bot Response Content - Rendered as Segments -->
+          <!-- Bot Response Content -->
           <div class="text-[var(--color-text-primary)] max-w-full w-full">
-            <!-- Render content segments (markdown + inline charts) -->
-            <template v-for="(segment, segmentIndex) in contentSegments" :key="`segment-${segmentIndex}`">
-              <MarkdownRenderer 
-                v-if="segment.type === 'markdown'" 
-                :content="segment.content || ''" 
-              />
-              <ChartRenderer 
-                v-else-if="segment.type === 'chart' && getChartForId(segment.chartId!)" 
-                :chart-svg="getChartForId(segment.chartId!)!" 
-              />
-              <div 
-                v-else-if="segment.type === 'chart'"
-                class="chart-error my-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-[var(--color-error)] text-center"
-              >
-                <p class="text-sm">⚠️ Chart {{ segment.chartId }} not found</p>
-              </div>
-            </template>
-            
-            <!-- Unreferenced Charts Section (for after-message display) -->
-            <div v-if="unreferencedCharts.length > 0" class="mt-4">
-              <div class="text-xs text-[var(--color-text-secondary)] mb-2">
-                Additional charts:
-              </div>
-              <div v-for="(chartSvg, chartIndex) in unreferencedCharts" :key="`unreferenced-${chartIndex}`">
-                <ChartRenderer :chart-svg="chartSvg" />
-              </div>
-            </div>
+            <MarkdownRenderer :content="message.content" />
             
             <!-- Stop Streaming Button -->
             <div v-if="message.isLoading" class="mt-3">
@@ -113,17 +87,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { ThumbsUp, ThumbsDown, Copy, Share2, Square } from 'lucide-vue-next'
 import MarkdownRenderer from './MarkdownRenderer.vue'
-import ChartRenderer from './ChartRenderer.vue'
 import type { ChatMessage } from '../../../types/chat'
-import { parseMessageContent, getUnreferencedCharts, type ContentSegment } from '../../../utils/contentParser'
 
 interface Props {
   message: ChatMessage
   messageIndex: number
-  chartOffset: number
 }
 
 interface Emits {
@@ -134,35 +104,6 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
-
-// Parse message content into segments for rendering
-const contentSegments = computed((): ContentSegment[] => {
-  return parseMessageContent(props.message.content)
-})
-
-// Get chart SVG by global chart ID (with offset calculation)
-const getChartForId = (globalChartId: number): string | null => {
-  if (!props.message.charts || props.message.charts.length === 0) {
-    return null
-  }
-  
-  const localChartIndex = globalChartId - props.chartOffset - 1
-  
-  if (localChartIndex >= 0 && localChartIndex < props.message.charts.length) {
-    return props.message.charts[localChartIndex]
-  }
-  
-  return null
-}
-
-// Get unreferenced charts for after-message display
-const unreferencedCharts = computed((): string[] => {
-  if (!props.message.charts || props.message.charts.length === 0) {
-    return []
-  }
-  
-  return getUnreferencedCharts(props.message.content, props.message.charts, props.chartOffset)
-})
 
 const toggleThinking = () => {
   emit('toggle-thinking', props.messageIndex)

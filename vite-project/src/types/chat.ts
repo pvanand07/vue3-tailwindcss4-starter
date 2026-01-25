@@ -18,7 +18,6 @@ export interface ChatMessage {
   thread_id?: string
   tools?: ChatTool[]
   tool_events?: ToolEvent[]
-  charts?: string[]
   thinkingExpanded?: boolean
   isLoading?: boolean
   timestamp?: string
