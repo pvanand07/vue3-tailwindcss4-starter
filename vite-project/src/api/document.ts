@@ -1,8 +1,9 @@
 import type { Document, DocumentListResponse, DocumentDetail } from '../types/document'
+import { getUploadEndpoint, API_CONFIG } from '../config/api'
 
 // API Configuration
 export const DOCUMENT_API_CONFIG = {
-  BASE_URL: '/api/v1', // Using Vite proxy
+  BASE_URL: '/api/v1', // Using Vite proxy for non-upload endpoints
   MAX_RETRIES: 3,
   RETRY_DELAY_MS: 1000
 } as const
@@ -182,6 +183,70 @@ export class DocumentAPI {
       docTags.forEach(tag => tagSet.add(tag))
     })
     return Array.from(tagSet).sort()
+  }
+
+  /**
+   * Upload files (documents and/or Excel files)
+   */
+  async uploadFiles(
+    userId: string,
+    files: File[],
+    sessionId?: string
+  ): Promise<{
+    results: Array<{
+      file_type: 'document' | 'excel'
+      message: string
+      filename: string
+      doc_id: string
+      page_count?: number
+      table_name?: string
+      row_count?: number
+      column_count?: number
+      columns?: string[]
+      metadata?: any
+    }>
+    total_files: number
+    successful: number
+    failed: number
+    errors?: Array<{
+      filename: string
+      error: string
+      status_code: number
+    }>
+  }> {
+    try {
+      const formData = new FormData()
+      formData.append('user_id', userId)
+      
+      if (sessionId) {
+        formData.append('session_id', sessionId)
+      }
+      
+      files.forEach(file => {
+        formData.append('files', file)
+      })
+
+      // Use direct endpoint for uploads to bypass Vercel proxy
+      const uploadUrl = getUploadEndpoint()
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'X-API-Key': API_CONFIG.API_KEY
+        },
+        body: formData
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || `Upload failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      console.error('Error uploading files:', error)
+      throw error
+    }
   }
 
   /**

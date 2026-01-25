@@ -40,14 +40,6 @@ const handleDeleteDocument = async (document: Document) => {
     return
   }
 
-  // Confirm deletion
-  const documentName = document.doc_name || document.filename || document.doc_id
-  const confirmed = window.confirm(`Are you sure you want to delete "${documentName}"?`)
-  
-  if (!confirmed) {
-    return
-  }
-
   try {
     await documentStore.deleteDocument(document.user_id, document.doc_id)
     console.log('Document deleted successfully:', document.doc_id)

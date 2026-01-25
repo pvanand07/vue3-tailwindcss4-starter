@@ -121,12 +121,31 @@ export class TextUtils {
 }
 
 /**
- * Sanitize user ID by converting spaces to underscores and keeping only alphanumeric characters
+ * Validate and sanitize user ID - only accepts email addresses
+ * Returns the full email address as the username, or throws an error if invalid
  */
 export const sanitizeUserId = (userId: string): string => {
-  return userId
-    .trim()
-    .replace(/\s+/g, '_') // Convert spaces to underscores
-    .replace(/[^a-zA-Z0-9_]/g, '') // Keep only alphanumeric and underscores
-    .toLowerCase() // Convert to lowercase for consistency
+  const trimmed = userId.trim()
+  
+  // Email validation regex pattern
+  // Matches: local-part@domain
+  // Allows: letters, numbers, dots, hyphens, underscores, plus signs in local part
+  // Domain must have at least one dot and valid TLD
+  const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  
+  if (!emailRegex.test(trimmed)) {
+    throw new Error('Please enter a valid email address')
+  }
+  
+  // Return the full email address (normalized to lowercase for consistency)
+  return trimmed.toLowerCase()
+}
+
+/**
+ * Check if a string is a valid email address
+ */
+export const isValidEmail = (email: string): boolean => {
+  const trimmed = email.trim()
+  const emailRegex = /^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  return emailRegex.test(trimmed)
 }

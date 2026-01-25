@@ -17,7 +17,7 @@ export const useChatStore = defineStore('chat', () => {
   const isThinking = ref(false)
   const errorMessage = ref('')
   const abortController = ref<AbortController | null>(null)
-  const selectedModel = ref('openai/gpt-4.1')
+  const selectedModel = ref('openai/gpt-5.2')
   const userLocation = ref<{ country: string; details: string } | null>(null)
   const userId = ref<string | null>(null)
   const isLoadingThreads = ref(false)
@@ -579,11 +579,11 @@ export const useChatStore = defineStore('chat', () => {
 
   const generateQuickQuestion = () => {
     const questions = [
-      "What are the latest trends in artificial intelligence?",
-      "How can I improve my data analysis skills?",
-      "What are the best practices for market research?",
-      "How do I create effective data visualizations?",
-      "What are the emerging technologies in renewable energy?"
+      "What are the latest trends in sales technology?",
+      "How can I improve my sales performance?",
+      "What are the best practices for customer relationship management?",
+      "How do I analyze sales data effectively?",
+      "What are the emerging trends in sales intelligence?"
     ]
     return questions[Math.floor(Math.random() * questions.length)]
   }

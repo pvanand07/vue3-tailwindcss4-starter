@@ -13,7 +13,7 @@
     <!-- Sidebar Header -->
     <div class="p-4 border-b border-slate-600">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-white text-center w-full">IResearcher</h2>
+        <h2 class="text-lg font-semibold text-white text-center w-full">SalesIQ</h2>
         <button 
           @click="$emit('close')"
           class="md:hidden p-1 hover:bg-slate-600 rounded text-white"
@@ -70,7 +70,34 @@
               </p>
             </div>
             <!-- Options Dropdown -->
-            <div class="relative">
+            <div class="relative flex items-center gap-1">
+              <!-- Delete Confirmation (inline) -->
+              <div v-if="deleteConfirmId === thread.id" class="flex items-center space-x-1 bg-red-50 border border-red-200 rounded-md px-2 py-1">
+                <span class="text-xs text-red-700 font-medium">Delete?</span>
+                <button
+                  @click.stop="confirmDeleteThread(thread.id)"
+                  class="text-red-600 hover:text-red-700 hover:bg-red-100 rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
+                  title="Confirm delete"
+                >
+                  Yes
+                </button>
+                <button
+                  @click.stop="cancelDeleteThread"
+                  class="text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
+                  title="Cancel"
+                >
+                  Cancel
+                </button>
+              </div>
+              <button 
+                v-else
+                @click.stop="showDeleteConfirm(thread.id)"
+                class="p-1 opacity-0 group-hover:opacity-100 hover:bg-slate-600 hover:bg-opacity-50 rounded transition-all text-slate-300"
+                :class="{ 'opacity-100': deleteConfirmId === thread.id }"
+                :aria-label="`Delete ${thread.title || 'Untitled Chat'}`"
+              >
+                <Trash2 class="w-4 h-4" />
+              </button>
               <button 
                 @click.stop="toggleOptionsMenu(thread.id)"
                 class="p-1 opacity-0 group-hover:opacity-100 hover:bg-slate-600 hover:bg-opacity-50 rounded transition-all text-slate-300"
@@ -92,13 +119,6 @@
                   >
                     <Edit2 class="w-3 h-3" />
                     Rename
-                  </button>
-                  <button 
-                    @click.stop="handleDeleteThread(thread.id)"
-                    class="w-full px-3 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
-                  >
-                    <Trash2 class="w-3 h-3" />
-                    Delete
                   </button>
                 </div>
               </Transition>
@@ -130,30 +150,37 @@
           </div>
           
           <!-- User ID Edit Form -->
-          <div v-else class="flex items-center space-x-2">
-            <input
-              v-model="editingUserId"
-              @keyup.enter="saveUserId"
-              @keyup.esc="cancelEditingUserId"
-              type="text"
-              placeholder="Enter user ID"
-              class="flex-1 px-2 py-1 text-sm bg-slate-700 border border-slate-500 rounded text-white placeholder-slate-400 focus:outline-none focus:border-blue-400"
-              ref="userIdInput"
-            />
-            <button 
-              @click="saveUserId"
-              class="p-1 bg-green-600 hover:bg-green-700 rounded text-white transition-colors"
-              aria-label="Save user ID"
-            >
-              <Check class="w-3 h-3" />
-            </button>
-            <button 
-              @click="cancelEditingUserId"
-              class="p-1 bg-slate-600 hover:bg-slate-700 rounded text-slate-300 hover:text-white transition-colors"
-              aria-label="Cancel editing"
-            >
-              <X class="w-3 h-3" />
-            </button>
+          <div v-else class="flex flex-col space-y-2">
+            <div class="flex items-center space-x-2">
+              <input
+                v-model="editingUserId"
+                @keyup.enter="saveUserId"
+                @keyup.esc="cancelEditingUserId"
+                @input="userIdError = null"
+                type="email"
+                placeholder="Enter email address"
+                class="flex-1 px-2 py-1 text-sm bg-slate-700 border rounded text-white placeholder-slate-400 focus:outline-none transition-colors"
+                :class="userIdError ? 'border-red-500 focus:border-red-400' : 'border-slate-500 focus:border-blue-400'"
+                ref="userIdInput"
+              />
+              <button 
+                @click="saveUserId"
+                class="p-1 bg-green-600 hover:bg-green-700 rounded text-white transition-colors"
+                aria-label="Save user ID"
+              >
+                <Check class="w-3 h-3" />
+              </button>
+              <button 
+                @click="cancelEditingUserId"
+                class="p-1 bg-slate-600 hover:bg-slate-700 rounded text-slate-300 hover:text-white transition-colors"
+                aria-label="Cancel editing"
+              >
+                <X class="w-3 h-3" />
+              </button>
+            </div>
+            <div v-if="userIdError" class="text-xs text-red-400 px-2">
+              {{ userIdError }}
+            </div>
           </div>
         </div>
         
@@ -190,11 +217,13 @@ const chatStore = useChatStore()
 
 // Local state
 const openDropdownId = ref<string | null>(null)
+const deleteConfirmId = ref<string | null>(null)
 const isEditingUserId = ref(false)
 // Use computed to reactively get userId from store
 const userId = computed(() => chatStore.userId)
 const editingUserId = ref<string | null>(null)
 const userIdInput = ref<HTMLInputElement | null>(null)
+const userIdError = ref<string | null>(null)
 
 // Handlers
 const handleNewChat = () => {
@@ -228,7 +257,13 @@ const handleLoadThread = async (thread: Thread) => {
 }
 
 const toggleOptionsMenu = (threadId: string) => {
-  openDropdownId.value = openDropdownId.value === threadId ? null : threadId
+  if (openDropdownId.value === threadId) {
+    openDropdownId.value = null
+    deleteConfirmId.value = null
+  } else {
+    openDropdownId.value = threadId
+    deleteConfirmId.value = null
+  }
 }
 
 const handleRenameThread = async (thread: Thread) => {
@@ -239,32 +274,50 @@ const handleRenameThread = async (thread: Thread) => {
   await chatStore.renameThread(thread.id, newTitle)
 }
 
-const handleDeleteThread = async (threadId: string) => {
+const showDeleteConfirm = (threadId: string) => {
+  deleteConfirmId.value = threadId
+  openDropdownId.value = null // Close dropdown when showing delete confirmation
+}
+
+const confirmDeleteThread = async (threadId: string) => {
+  deleteConfirmId.value = null
   openDropdownId.value = null
-  if (!confirm('Are you sure you want to delete this chat?')) return
-  
   await chatStore.deleteThread(threadId)
+}
+
+const cancelDeleteThread = () => {
+  deleteConfirmId.value = null
 }
 
 const startEditingUserId = () => {
   isEditingUserId.value = true
   editingUserId.value = chatStore.userId || ''
+  userIdError.value = null
   nextTick(() => {
     userIdInput.value?.focus()
   })
 }
 
 const saveUserId = () => {
-  if (editingUserId.value) {
+  if (!editingUserId.value) {
+    userIdError.value = 'Please enter an email address'
+    return
+  }
+  
+  try {
     const sanitized = sanitizeUserId(editingUserId.value)
+    userIdError.value = null
     isEditingUserId.value = false
     chatStore.setUserId(sanitized)
+  } catch (error: any) {
+    userIdError.value = error.message || 'Please enter a valid email address'
   }
 }
 
 const cancelEditingUserId = () => {
   isEditingUserId.value = false
   editingUserId.value = chatStore.userId || ''
+  userIdError.value = null
 }
 
 // Lifecycle

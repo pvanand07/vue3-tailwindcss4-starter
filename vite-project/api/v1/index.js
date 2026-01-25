@@ -16,25 +16,25 @@ export default async function handler(req, res) {
     const apiPath = req.url.replace('/api/v1/', '');
     console.log('API Path:', apiPath);
     console.log('Request method:', req.method);
-    console.log('Request body:', req.body);
+    console.log('Content-Type:', req.headers['content-type']);
 
     // Construct the external API URL
-    const externalApiUrl = `https://api4iresearcher-v5-1.elevatics.site/api/v1/${apiPath}`;
+    const externalApiUrl = `https://fmcg-agent.elevatics.site/api/v1/${apiPath}`;
     console.log('Forwarding to:', externalApiUrl);
     
     // Prepare request options
     const requestOptions = {
       method: req.method,
       headers: {
+        'X-API-Key': '44d5c2ac18ced6fc25c1e57dcdfygmdmrstt4577bf56e67540671a647465df4',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'X-API-Key': '44d5c2ac18ced6fc25c1e57dcdfygmdmrstt4577bf56e67540671a647465df4',
         // Forward any additional headers from the original request
         ...(req.headers['user-agent'] && { 'User-Agent': req.headers['user-agent'] }),
         ...(req.headers['accept-language'] && { 'Accept-Language': req.headers['accept-language'] }),
       }
     };
-
+    
     // Add body for POST/PUT requests
     if (req.method !== 'GET' && req.method !== 'DELETE' && req.body) {
       requestOptions.body = JSON.stringify(req.body);
@@ -92,7 +92,7 @@ export default async function handler(req, res) {
     res.status(500).json({ 
       error: 'Internal server error',
       message: error.message,
-      endpoint: 'https://api4iresearcher-v5-1.elevatics.site/api/v1'
+      endpoint: 'https://fmcg-agent.elevatics.site/api/v1'
     });
   }
 }

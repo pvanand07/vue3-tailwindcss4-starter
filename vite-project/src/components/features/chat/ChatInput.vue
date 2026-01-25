@@ -19,7 +19,7 @@
                 :disabled="isLoading"
                 class="w-full bg-transparent p-2 text-slate-800 placeholder-slate-500 focus:outline-none resize-none scrollbar-thin"
                 rows="1"
-                placeholder="Ask me anything about research, data analysis, or market trends..."
+                placeholder="Ask me anything about sales, customer insights, or market intelligence..."
                 maxlength="4000"
                 aria-label="Message input"
               ></textarea>
@@ -31,7 +31,7 @@
             
             <!-- Bottom Controls Row -->
             <div class="flex items-center justify-between mt-2">
-              <!-- Left: Model Selection -->
+              <!-- Left: Model Selection and Upload Button -->
               <div class="flex items-center gap-2">
                 <select 
                   :value="selectedModel" 
@@ -39,13 +39,21 @@
                   class="text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer hover:bg-slate-100 rounded-md px-2 py-1 max-w-48"
                   aria-label="Select AI Model"
                 >
-                  <option value="openai/gpt-4.1">GPT-4.1</option>
-                  <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
-                  <option value="z-ai/glm-4.5">GLM 4.5</option>
-                  <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
-                  <option value="x-ai/grok-code-fast-1">Grok Code Fast 1</option>
-                  <option value="anthropic/claude-sonnet-4">Sonnet 4</option>
+                  <option value="openai/gpt-5.2">GPT-5.2</option>
+                  <option value="google/gemini-3-pro-preview">Gemini 3 Pro</option>
+                  <option value="anthropic/claude-sonnet-4.5">Sonnet 4.5</option>
                 </select>
+                
+                <!-- Upload Button -->
+                <button
+                  type="button"
+                  @click="showUploadModal = true"
+                  class="text-slate-600 hover:bg-slate-100 rounded-lg p-2 transition-colors"
+                  aria-label="Upload files"
+                  title="Upload files"
+                >
+                  <Paperclip class="w-5 h-5" />
+                </button>
               </div>
               
               <!-- Right: Send/Stop Button -->
@@ -73,13 +81,21 @@
         </form>
       </div>
     </div>
+
+    <!-- Upload Modal -->
+    <DocumentUploadModal 
+      :is-open="showUploadModal"
+      @close="showUploadModal = false"
+      @upload-success="handleUploadSuccess"
+    />
   </footer>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
-import { ArrowUp, Square } from 'lucide-vue-next'
+import { ref, nextTick, watch } from 'vue'
+import { ArrowUp, Square, Paperclip } from 'lucide-vue-next'
 import { useChatStore } from '../../../stores/chat'
+import DocumentUploadModal from '../dashboard/DocumentUploadModal.vue'
 
 interface Props {
   sidebarOpen: boolean
@@ -110,6 +126,7 @@ const handleModelChange = (event: Event) => {
 // Local state
 const inputMessage = ref('')
 const messageInput = ref<HTMLTextAreaElement | null>(null)
+const showUploadModal = ref(false)
 
 // Handlers
 const handleSendMessage = async () => {
@@ -139,6 +156,18 @@ const handleEnterKey = (event: KeyboardEvent) => {
   event.preventDefault()
   handleSendMessage()
 }
+
+const handleUploadSuccess = () => {
+  // Optional: Show a success notification or update UI
+  console.log('✅ Files uploaded successfully')
+}
+
+// Watch for chat messages to close upload modal when chat starts
+watch(() => chatStore.hasUserMessages, (hasMessages) => {
+  if (hasMessages) {
+    showUploadModal.value = false
+  }
+})
 
 // Focus method for external use
 const focus = () => {

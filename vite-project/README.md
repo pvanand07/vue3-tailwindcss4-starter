@@ -1,6 +1,6 @@
-# Iresearcher - Internet Research Assistant
+# SalesIQ - Sales Intelligence Assistant
 
-A modern, fast Vue 3 AI research assistant built with TypeScript, Tailwind CSS v4, and Vite. Features real-time chat with AI, beautiful charts, markdown rendering, and a responsive UI for internet research and data analysis.
+A modern, fast Vue 3 AI sales intelligence assistant built with TypeScript, Tailwind CSS v4, and Vite. Features real-time chat with AI, beautiful charts, markdown rendering, and a responsive UI for sales intelligence and data analysis.
 
 ## 🚀 Features
 
@@ -12,7 +12,7 @@ A modern, fast Vue 3 AI research assistant built with TypeScript, Tailwind CSS v
 - **Dark/Light Mode**: Automatic theme switching
 - **Chat History**: Local storage for conversation persistence
 - **Modern UI**: Clean, accessible interface with smooth animations
-- **Research Focus**: Optimized for internet research and data analysis
+- **Sales Focus**: Optimized for sales intelligence and data analysis
 
 ## 🛠️ Tech Stack
 
@@ -93,12 +93,12 @@ For production, you can set environment variables in the Vercel dashboard:
 
 ## 📱 Usage
 
-1. **Start a New Chat**: Click "New Chat" to begin a research session
-2. **Ask Research Questions**: Type your research questions and press Enter
+1. **Start a New Chat**: Click "New Chat" to begin a sales intelligence session
+2. **Ask Sales Questions**: Type your sales questions and press Enter
 3. **View Responses**: AI responses are streamed in real-time with charts and data
 4. **Data Visualization**: Responses include beautiful charts and visualizations
 5. **Markdown Support**: Responses support rich formatting and code highlighting
-6. **Chat History**: Previous research sessions are saved locally
+6. **Chat History**: Previous sales intelligence sessions are saved locally
 7. **Theme Toggle**: Switch between light and dark modes
 
 ## 🏗️ Project Structure

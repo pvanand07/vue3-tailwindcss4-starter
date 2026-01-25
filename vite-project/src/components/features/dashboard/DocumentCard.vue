@@ -42,14 +42,15 @@
       </div>
 
       <!-- Footer -->
-      <div class="mt-4 pt-4 border-t border-gray-200">
+      <div class="mt-4 pt-4 border-t border-gray-200 overflow-visible">
         <div class="flex items-center justify-between text-xs text-gray-500">
           <div class="flex items-center">
             <Calendar class="w-4 h-4 mr-1" />
             {{ formatDate(document.created_at) }}
           </div>
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-2 relative z-10">
             <button
+              v-if="!showDeleteConfirm"
               @click.stop="$emit('share', document)"
               class="text-gray-400 hover:text-blue-500 transition-colors"
               title="Share document"
@@ -57,14 +58,34 @@
               <Share2 class="w-4 h-4" />
             </button>
             <button
+              v-if="!showDeleteConfirm"
               @click.stop="$emit('download', document)"
               class="text-gray-400 hover:text-green-500 transition-colors"
               title="Download document"
             >
               <Download class="w-4 h-4" />
             </button>
+            <!-- Delete Confirmation -->
+            <div v-if="showDeleteConfirm" class="flex items-center space-x-1 bg-red-50 border border-red-200 rounded-md px-2 py-1 z-10 relative">
+              <span class="text-xs text-red-700 font-medium">Delete?</span>
+              <button
+                @click.stop="confirmDelete"
+                class="text-red-600 hover:text-red-700 hover:bg-red-100 rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
+                title="Confirm delete"
+              >
+                Yes
+              </button>
+              <button
+                @click.stop="cancelDelete"
+                class="text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
+                title="Cancel"
+              >
+                Cancel
+              </button>
+            </div>
             <button
-              @click.stop="$emit('delete', document)"
+              v-else
+              @click.stop="showDeleteConfirm = true"
               class="text-gray-400 hover:text-red-500 transition-colors"
               title="Delete document"
             >
@@ -78,6 +99,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { defineProps, defineEmits } from 'vue'
 import { 
   Calendar, 
@@ -89,17 +111,30 @@ import {
 import type { Document } from '../../../types/document'
 import { formatDate } from '../../../utils/date'
 
-defineProps<{
+const props = defineProps<{
   document: Document
 }>()
 
-defineEmits<{
+type Emits = {
   click: [document: Document]
   favorite: [document: Document]
   share: [document: Document]
   download: [document: Document]
   delete: [document: Document]
-}>()
+}
+
+const emit = defineEmits<Emits>()
+
+const showDeleteConfirm = ref(false)
+
+const confirmDelete = () => {
+  emit('delete', props.document)
+  showDeleteConfirm.value = false
+}
+
+const cancelDelete = () => {
+  showDeleteConfirm.value = false
+}
 
 // Function to format page display
 const getPageDisplay = (pageRange: string | undefined) => {
