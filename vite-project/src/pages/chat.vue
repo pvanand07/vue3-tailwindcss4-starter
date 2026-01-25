@@ -106,7 +106,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden bg-[var(--color-app-bg)]">
+  <div class="flex h-screen overflow-hidden">
     <!-- Chat Sidebar -->
     <ChatSidebar 
       :is-open="uiStore.sidebarOpen" 
@@ -126,11 +126,11 @@ onUnmounted(() => {
       />
 
       <!-- Chat Messages -->
-      <main ref="chatMessages" class="flex-1 overflow-y-auto p-2 sm:p-4 md:p-8 scrollbar-thin pt-14 bg-[var(--color-app-bg)]">
+      <main ref="chatMessages" class="flex-1 overflow-y-auto p-2 sm:p-4 md:p-8 scrollbar-thin pt-14">
         <div class="max-w-4xl mx-auto w-full space-y-4 sm:space-y-6 transition-all duration-300" :class="{ 'md:max-w-6xl': !uiStore.sidebarOpen }">
           <!-- Current Thread Title -->
           <div v-if="chatStore.currentThreadTitle && chatStore.messages.length > 1" class="text-center mb-6">
-            <h1 class="text-xl sm:text-2xl font-semibold text-[var(--color-text-primary)]">{{ chatStore.currentThreadTitle }}</h1>
+            <h1 class="text-xl sm:text-2xl font-semibold text-slate-700">{{ chatStore.currentThreadTitle }}</h1>
           </div>
 
           <!-- Empty State -->

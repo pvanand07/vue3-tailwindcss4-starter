@@ -37,6 +37,10 @@
   --color-primary: #50522c;
   --color-secondary: #F0F4F9;
   
+  /* --- Two-Tone Brand Colors for XY-Intelligence --- */
+  --color-xy-tone: #50522c; /* Primary brand color for "XY" */
+  --color-intelligence-tone: #1A73E8; /* Complementary blue for "Intelligence" */
+  
   --breakpoint-xs: 475px;
 }
 
@@ -72,6 +76,10 @@
   /* Legacy compatibility */
   --color-primary: #50522c;
   --color-secondary: #1E1F20;
+  
+  /* Two-Tone Brand Colors for Dark Mode */
+  --color-xy-tone: #6b6d3a; /* Lighter olive for dark mode */
+  --color-intelligence-tone: #A8C7FA; /* Light blue for dark mode */
 }
 
 /* Custom styles */
@@ -121,10 +129,27 @@ textarea:focus {
 
 /* Utility for the gradient text seen in "Hi Anand" */
 .text-gradient-gemini {
-  background: linear-gradient(to right, #4285F4, #9B72CB, #D96570);
+  background: linear-gradient(to right, #63482b, #9B72CB, #D96570);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Two-tone system for XY-Intelligence branding */
+.text-xy-intelligence .xy-part {
+  color: var(--color-xy-tone);
+}
+
+.text-xy-intelligence .hyphen-part {
+  color: var(--color-xy-tone);
+}
+
+.text-xy-intelligence .intelligence-part {
+  color: var(--color-text-primary);
+}
+
+.dark .text-xy-intelligence .intelligence-part {
+  color: var(--color-text-secondary);
 }
 
 /* Animation improvements */
