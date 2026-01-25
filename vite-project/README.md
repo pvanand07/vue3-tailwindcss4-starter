@@ -1,4 +1,4 @@
-# SalesIQ - Sales Intelligence Assistant
+# XY-Intelligence - Sales Intelligence Assistant
 
 A modern, fast Vue 3 AI sales intelligence assistant built with TypeScript, Tailwind CSS v4, and Vite. Features real-time chat with AI, beautiful charts, markdown rendering, and a responsive UI for sales intelligence and data analysis.
 
