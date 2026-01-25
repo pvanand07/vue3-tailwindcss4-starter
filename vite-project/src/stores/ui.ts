@@ -128,13 +128,17 @@ export const useUIStore = defineStore('ui', () => {
     const root = document.documentElement
     const currentTheme = effectiveTheme.value
     
-    root.classList.remove('light', 'dark')
-    root.classList.add(currentTheme)
+    // Tailwind CSS 4: only add/remove 'dark' class, light mode is default (no class)
+    if (currentTheme === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
     
     // Update meta theme color for mobile browsers
     const metaThemeColor = document.querySelector('meta[name="theme-color"]')
     if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', currentTheme === 'dark' ? '#1e293b' : '#ffffff')
+      metaThemeColor.setAttribute('content', currentTheme === 'dark' ? '#292524' : '#ffffff')
     }
   }
 

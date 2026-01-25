@@ -5,9 +5,9 @@
       <div class="flex-1 max-w-full">
         <div class="max-w-full w-full">
           <!-- Thinking Section -->
-          <div v-if="message.tools && message.tools.length > 0" class="bg-slate-50 border border-slate-200 rounded-lg mb-4 overflow-hidden">
+          <div v-if="message.tools && message.tools.length > 0" class="bg-[#F1F5F9] border border-[#E5E7EB] rounded-lg mb-4 overflow-hidden">
             <div 
-              class="bg-slate-100 p-3 cursor-pointer flex items-center justify-between font-medium text-slate-600 hover:bg-slate-200 transition-colors duration-200 select-none"
+              class="bg-white p-3 cursor-pointer flex items-center justify-between font-medium text-[#475569] hover:bg-[#F1F5F9] transition-colors duration-200 select-none"
               @click="toggleThinking"
               role="button"
               :aria-expanded="message.thinkingExpanded"
@@ -22,17 +22,17 @@
               :class="message.thinkingExpanded ? 'max-h-96 p-4' : 'max-h-0 p-0'"
             >
               <div class="max-h-96 overflow-y-auto scrollbar-thin">
-                <div v-for="(tool, toolIndex) in message.tools" :key="toolIndex" class="mb-3 p-3 bg-white rounded-md border-l-4 border-primary">
-                  <div class="font-semibold text-primary text-sm mb-2">🔧 {{ tool.name }}</div>
-                  <div class="bg-slate-50 p-2 rounded text-xs font-mono text-primary mb-2 break-all">{{ tool.input }}</div>
-                  <div v-if="tool.reasoning" class="text-slate-600 italic text-xs leading-relaxed">💭 {{ tool.reasoning }}</div>
+                <div v-for="(tool, toolIndex) in message.tools" :key="toolIndex" class="mb-3 p-3 bg-white rounded-md border-l-4 border-[#2F5BFF]">
+                  <div class="font-semibold text-[#2F5BFF] text-sm mb-2">🔧 {{ tool.name }}</div>
+                  <div class="bg-[#F1F5F9] p-2 rounded text-xs font-mono text-[#2F5BFF] mb-2 break-all">{{ tool.input }}</div>
+                  <div v-if="tool.reasoning" class="text-[#475569] italic text-xs leading-relaxed">💭 {{ tool.reasoning }}</div>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Bot Response Content - Rendered as Segments -->
-          <div class="text-slate-700 max-w-full w-full">
+          <div class="text-[#0F172A] max-w-full w-full">
             <!-- Render content segments (markdown + inline charts) -->
             <template v-for="(segment, segmentIndex) in contentSegments" :key="`segment-${segmentIndex}`">
               <MarkdownRenderer 
@@ -45,7 +45,7 @@
               />
               <div 
                 v-else-if="segment.type === 'chart'"
-                class="chart-error my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-center"
+                class="chart-error my-4 p-4 bg-red-50 border border-red-200 rounded-lg text-[#EF4444] text-center"
               >
                 <p class="text-sm">⚠️ Chart {{ segment.chartId }} not found</p>
               </div>
@@ -53,7 +53,7 @@
             
             <!-- Unreferenced Charts Section (for after-message display) -->
             <div v-if="unreferencedCharts.length > 0" class="mt-4">
-              <div class="text-xs text-gray-500 mb-2">
+              <div class="text-xs text-[#475569] mb-2">
                 Additional charts:
               </div>
               <div v-for="(chartSvg, chartIndex) in unreferencedCharts" :key="`unreferenced-${chartIndex}`">
@@ -65,7 +65,7 @@
             <div v-if="message.isLoading" class="mt-3">
               <button 
                 @click="$emit('cancel-request')" 
-                class="flex items-center gap-2 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md px-3 py-1.5 transition-colors"
+                class="flex items-center gap-2 text-sm text-[#475569] bg-[#F1F5F9] hover:bg-[#E5E7EB] rounded-md px-3 py-1.5 transition-colors"
                 aria-label="Stop generating response"
               >
                 <Square class="w-4 h-4" />
@@ -74,17 +74,17 @@
             </div>
 
             <!-- Bot actions -->
-            <div class="flex items-center gap-4 mt-3 text-slate-400">
-               <button @click="copyMessage" class="hover:text-slate-600 transition-colors" aria-label="Like response">
+            <div class="flex items-center gap-4 mt-3 text-[#64748B]">
+               <button @click="copyMessage" class="hover:text-[#2F5BFF] transition-colors" aria-label="Like response">
                    <ThumbsUp class="w-4 h-4" />
                </button>
-               <button class="hover:text-slate-600 transition-colors" aria-label="Dislike response">
+               <button class="hover:text-[#2F5BFF] transition-colors" aria-label="Dislike response">
                    <ThumbsDown class="w-4 h-4" />
                </button>
-               <button @click="copyMessage" class="hover:text-slate-600 transition-colors" aria-label="Copy message">
+               <button @click="copyMessage" class="hover:text-[#2F5BFF] transition-colors" aria-label="Copy message">
                    <Copy class="w-4 h-4" />
                </button>
-               <button class="hover:text-slate-600 transition-colors" aria-label="Share message">
+               <button class="hover:text-[#2F5BFF] transition-colors" aria-label="Share message">
                    <Share2 class="w-4 h-4" />
                </button>
             </div>
@@ -96,7 +96,7 @@
     <!-- User Message -->
     <div v-else-if="message.role === 'user'" class="flex justify-end mb-6">
       <div class="max-w-2xl">
-        <div class="bg-primary text-white p-4 rounded-xl rounded-br-none">
+        <div class="bg-white/50 backdrop-blur-sm border border-[#E5E7EB] text-[#0F172A] p-4 rounded-xl rounded-br-none">
           <!-- Message Content -->
           <p class="text-sm md:text-base leading-relaxed">{{ message.content }}</p>
         </div>

@@ -1,12 +1,12 @@
 <template>
   <!-- Floating Input Box -->
   <footer class="p-2 sm:p-4 w-full">
-    <div class="max-w-4xl mx-auto transition-all duration-300" :class="{ 'md:max-w-6xl': !sidebarOpen }">
-      <div class="bg-white border border-slate-200 rounded-xl shadow-lg p-2 sm:p-3">
-        <!-- Error Message -->
-        <div v-if="errorMessage" class="text-red-500 text-sm mb-2" role="alert">
-          {{ errorMessage }}
-        </div>
+      <div class="max-w-4xl mx-auto transition-all duration-300" :class="{ 'md:max-w-6xl': !sidebarOpen }">
+        <div class="bg-white border border-[#E5E7EB] rounded-xl shadow-lg p-2 sm:p-3">
+          <!-- Error Message -->
+          <div v-if="errorMessage" class="text-[#EF4444] text-sm mb-2" role="alert">
+            {{ errorMessage }}
+          </div>
         
         <form @submit.prevent="handleSendMessage">
           <div>
@@ -17,14 +17,14 @@
                 v-model="inputMessage"
                 @keydown.enter="handleEnterKey"
                 :disabled="isLoading"
-                class="w-full bg-transparent p-2 text-slate-800 placeholder-slate-500 focus:outline-none resize-none scrollbar-thin"
+                class="w-full bg-transparent p-2 text-[#0F172A] placeholder-[#94A3B8] focus:outline-none resize-none scrollbar-thin"
                 rows="1"
                 placeholder="Ask me anything about sales, customer insights, or market intelligence..."
                 maxlength="4000"
                 aria-label="Message input"
               ></textarea>
               <!-- Floating Character Counter -->
-              <div class="absolute top-2 right-2 text-xs text-slate-400 pointer-events-none" aria-live="polite">
+              <div class="absolute top-2 right-2 text-xs text-[#94A3B8] pointer-events-none" aria-live="polite">
                 {{ inputMessage.length }}/4000
               </div>
             </div>
@@ -36,7 +36,7 @@
                 <select 
                   :value="selectedModel" 
                   @change="handleModelChange"
-                  class="text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer hover:bg-slate-100 rounded-md px-2 py-1 max-w-48"
+                  class="text-sm text-[#475569] bg-transparent border-0 focus:outline-none cursor-pointer hover:bg-[#F1F5F9] rounded-md px-2 py-1 max-w-48"
                   aria-label="Select AI Model"
                 >
                   <option value="openai/gpt-5.2">GPT-5.2</option>
@@ -48,7 +48,7 @@
                 <button
                   type="button"
                   @click="showUploadModal = true"
-                  class="text-slate-600 hover:bg-slate-100 rounded-lg p-2 transition-colors"
+                  class="text-[#64748B] hover:bg-[#F1F5F9] rounded-lg p-2 transition-colors"
                   aria-label="Upload files"
                   title="Upload files"
                 >
@@ -62,7 +62,7 @@
                   type="submit"
                   :disabled="(!inputMessage.trim() && !isLoading) || isThinking || inputMessage.length > 4000"
                   class="rounded-lg p-2 transition-colors flex-shrink-0"
-                  :class="isLoading ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-primary text-white hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed'"
+                  :class="isLoading ? 'bg-[#EF4444] text-white hover:bg-[#DC2626]' : 'bg-[#2F5BFF] text-white hover:bg-[#1E40FF] disabled:bg-[#94A3B8] disabled:cursor-not-allowed'"
                   :aria-label="isLoading ? 'Stop generating' : 'Send message'"
                 >
                   <template v-if="isLoading">

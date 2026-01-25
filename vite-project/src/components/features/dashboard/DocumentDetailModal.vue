@@ -3,7 +3,7 @@
     <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center">
       <!-- Background overlay -->
       <div 
-        class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-[9998]" 
+        class="fixed inset-0 bg-black/50 transition-opacity z-[9998]" 
         aria-hidden="true"
         @click="$emit('close')"
       ></div>
@@ -21,32 +21,32 @@
         <div class="bg-white px-4 pt-5 pb-4 p-6 pb-4">
           <div class="flex items-start justify-between">
             <div class="flex-1 min-w-0">
-              <h3 class="text-xl font-semibold text-gray-900" id="modal-title">
+              <h3 class="text-xl font-semibold text-[#0F172A]" id="modal-title">
                 {{ document.metadata.doc_name }}
               </h3>
               <div class="mt-2 flex items-center space-x-4">
                 <span 
-                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#E4E9FF] text-[#2F5BFF]"
                 >
                   <Bot class="w-4 h-4 mr-1" />
                   AI Generated
                 </span>
-                <span class="text-sm text-gray-500">
+                <span class="text-sm text-[#475569]">
                   {{ document.metadata.page_range }} page{{ document.metadata.page_range.includes('-') ? 's' : '' }}
                 </span>
-                <span class="text-sm text-gray-500">
+                <span class="text-sm text-[#475569]">
                   Created {{ formatDate(document.metadata.created_at) }}
                 </span>
               </div>
             </div>
             <div class="flex items-center space-x-4">
               <!-- Page Count Display -->
-              <div class="text-sm text-gray-500">
+              <div class="text-sm text-[#475569]">
                 {{ Object.keys(document.pages).length }} page{{ Object.keys(document.pages).length !== 1 ? 's' : '' }}
               </div>
               <button
                 @click="toggleFullscreen"
-                class="bg-white rounded-md text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                class="bg-white rounded-md text-[#64748B] hover:text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2F5BFF]"
                 :title="isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
               >
                 <span class="sr-only">{{ isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen' }}</span>
@@ -54,7 +54,7 @@
               </button>
               <button
                 @click="$emit('close')"
-                class="bg-white rounded-md text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                class="bg-white rounded-md text-[#64748B] hover:text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2F5BFF]"
               >
                 <span class="sr-only">Close</span>
                 <X class="h-6 w-6" />
@@ -66,7 +66,7 @@
         <!-- Content -->
         <div 
           :class="[
-            'bg-gray-50 px-2 md:px-6 py-3 md:py-5 overflow-y-auto flex-1',
+            'bg-[#EFF3F9] px-2 md:px-6 py-3 md:py-5 overflow-y-auto flex-1',
             isFullscreen ? 'h-[calc(100vh-8rem)]' : 'h-[calc(98vh-8rem)]'
           ]"
         >
@@ -83,28 +83,28 @@
               ]"
             >
               <div class="bg-white rounded-lg shadow-sm p-3 md:p-6">
-                <h4 class="text-base md:text-lg font-medium text-gray-900 mb-3 md:mb-4">Document Info</h4>
+                <h4 class="text-base md:text-lg font-medium text-[#0F172A] mb-3 md:mb-4">Document Info</h4>
                 
                 <!-- Summary -->
                 <div v-if="document.metadata.summary" class="mb-4">
-                  <h5 class="text-sm font-medium text-gray-700 mb-2">Summary</h5>
-                  <p class="text-sm text-gray-600">{{ document.metadata.summary }}</p>
+                  <h5 class="text-sm font-medium text-[#0F172A] mb-2">Summary</h5>
+                  <p class="text-sm text-[#475569]">{{ document.metadata.summary }}</p>
                 </div>
 
                 <!-- Applicability -->
                 <div v-if="document.metadata.applicability" class="mb-4">
-                  <h5 class="text-sm font-medium text-gray-700 mb-2">Use Case</h5>
-                  <p class="text-sm text-gray-600">{{ document.metadata.applicability }}</p>
+                  <h5 class="text-sm font-medium text-[#0F172A] mb-2">Use Case</h5>
+                  <p class="text-sm text-[#475569]">{{ document.metadata.applicability }}</p>
                 </div>
 
                 <!-- Tags -->
                 <div v-if="document.metadata.tags.length > 0" class="mb-4">
-                  <h5 class="text-sm font-medium text-gray-700 mb-2">Tags</h5>
+                  <h5 class="text-sm font-medium text-[#0F172A] mb-2">Tags</h5>
                   <div class="flex flex-wrap gap-2">
                     <span
                       v-for="tag in document.metadata.tags"
                       :key="tag"
-                      class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700"
+                      class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-[#F1F5F9] text-[#0F172A]"
                     >
                       <Hash class="w-3 h-3 mr-1" />
                       {{ tag }}
@@ -113,18 +113,18 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="pt-4 border-t border-gray-200">
+                <div class="pt-4 border-t border-[#E5E7EB]">
                   <div class="flex flex-col space-y-2">
                     <button
                       @click="downloadDocument"
-                      class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#2F5BFF] hover:bg-[#1E40FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2F5BFF]"
                     >
                       <Download class="w-4 h-4 mr-2" />
                       Download
                     </button>
                     <button
                       @click="shareDocument"
-                      class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      class="inline-flex items-center px-4 py-2 border border-[#E5E7EB] text-sm font-medium rounded-md text-[#0F172A] bg-white hover:bg-[#F1F5F9] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2F5BFF]"
                     >
                       <Share2 class="w-4 h-4 mr-2" />
                       Share
@@ -155,7 +155,7 @@
                     class="prose prose-sm lg:prose-base max-w-none leading-relaxed"
                     v-html="renderedFullContent"
                   ></div>
-                  <div v-else class="text-gray-500 italic">
+                  <div v-else class="text-[#475569] italic">
                     No content available for this document.
                   </div>
                 </div>
@@ -279,7 +279,7 @@ const shareDocument = () => {
 
 <style>
 .prose {
-  color: #374151;
+  color: #0F172A;
   font-size: 1rem;
   line-height: 1.75;
 }
@@ -290,7 +290,7 @@ const shareDocument = () => {
 .prose h4,
 .prose h5,
 .prose h6 {
-  color: #111827;
+  color: #0F172A;
   font-weight: 600;
   line-height: 1.25;
 }
@@ -336,7 +336,7 @@ const shareDocument = () => {
 }
 
 .prose code {
-  background-color: #f3f4f6;
+  background-color: #F1F5F9;
   padding: 0.125rem 0.375rem;
   border-radius: 0.375rem;
   font-size: 0.875rem;
@@ -344,7 +344,7 @@ const shareDocument = () => {
 }
 
 .prose pre {
-  background-color: #f9fafb;
+  background-color: #F1F5F9;
   padding: 1.25rem;
   border-radius: 0.5rem;
   overflow-x: auto;
@@ -354,29 +354,29 @@ const shareDocument = () => {
 }
 
 .prose blockquote {
-  border-left: 4px solid #e5e7eb;
+  border-left: 4px solid #E5E7EB;
   padding-left: 1.5rem;
   margin: 1.5rem 0;
   font-style: italic;
-  color: #6b7280;
-  background-color: #f9fafb;
+  color: #475569;
+  background-color: #F1F5F9;
   padding: 1rem 0 1rem 1.5rem;
   border-radius: 0 0.375rem 0.375rem 0;
 }
 
 .prose strong {
-  color: #111827;
+  color: #0F172A;
   font-weight: 600;
 }
 
 .prose em {
   font-style: italic;
-  color: #4b5563;
+  color: #475569;
 }
 
 .prose hr {
   border: none;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #E5E7EB;
   margin: 2rem 0;
 }
 
@@ -388,13 +388,13 @@ const shareDocument = () => {
 
 .prose th,
 .prose td {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #E5E7EB;
   padding: 0.75rem;
   text-align: left;
 }
 
 .prose th {
-  background-color: #f9fafb;
+  background-color: #F1F5F9;
   font-weight: 600;
 }
 </style>

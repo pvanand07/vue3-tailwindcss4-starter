@@ -7,21 +7,21 @@
       <!-- Header -->
       <div class="flex items-start justify-between">
         <div class="flex-1 min-w-0">
-          <h3 class="text-lg font-medium text-gray-900 line-clamp-2" :title="document.doc_name || document.filename">
+          <h3 class="text-lg font-medium text-[#0F172A] line-clamp-2" :title="document.doc_name || document.filename">
             {{ document.doc_name || document.filename }}
           </h3>
           <div class="mt-1 flex items-center space-x-2">
-            <span v-if="document.page_range || document.page_count !== null" class="text-xs text-gray-500">
+            <span v-if="document.page_range || document.page_count !== null" class="text-xs text-[#475569]">
               {{ getPageDisplay(document.page_range || (document.page_count ? `1-${document.page_count}` : '')) }}
             </span>
-            <span v-else class="text-xs text-gray-400 italic">
+            <span v-else class="text-xs text-[#94A3B8] italic">
               No page info
             </span>
           </div>
         </div>
         <button
           @click.stop="$emit('favorite', document)"
-          class="ml-2 text-gray-400 hover:text-yellow-500 transition-colors"
+          class="ml-2 text-[#94A3B8] hover:text-yellow-500 transition-colors"
         >
           <Star class="w-5 h-5" />
         </button>
@@ -31,19 +31,19 @@
       <div class="mt-4">
         <p 
           v-if="document.summary || document.content_preview" 
-          class="text-sm text-gray-600 line-clamp-4"
+          class="text-sm text-[#475569] line-clamp-4"
           :title="document.summary || document.content_preview || ''"
         >
           {{ document.summary || document.content_preview }}
         </p>
-        <p v-else class="text-sm text-gray-400 italic">
+        <p v-else class="text-sm text-[#94A3B8] italic">
           No summary available
         </p>
       </div>
 
       <!-- Footer -->
-      <div class="mt-4 pt-4 border-t border-gray-200 overflow-visible">
-        <div class="flex items-center justify-between text-xs text-gray-500">
+      <div class="mt-4 pt-4 border-t border-[#E5E7EB] overflow-visible">
+        <div class="flex items-center justify-between text-xs text-[#475569]">
           <div class="flex items-center">
             <Calendar class="w-4 h-4 mr-1" />
             {{ formatDate(document.created_at) }}
@@ -52,7 +52,7 @@
             <button
               v-if="!showDeleteConfirm"
               @click.stop="$emit('share', document)"
-              class="text-gray-400 hover:text-blue-500 transition-colors"
+              class="text-[#64748B] hover:text-[#2F5BFF] transition-colors"
               title="Share document"
             >
               <Share2 class="w-4 h-4" />
@@ -60,7 +60,7 @@
             <button
               v-if="!showDeleteConfirm"
               @click.stop="$emit('download', document)"
-              class="text-gray-400 hover:text-green-500 transition-colors"
+              class="text-[#64748B] hover:text-[#22C55E] transition-colors"
               title="Download document"
             >
               <Download class="w-4 h-4" />
@@ -70,14 +70,14 @@
               <span class="text-xs text-red-700 font-medium">Delete?</span>
               <button
                 @click.stop="confirmDelete"
-                class="text-red-600 hover:text-red-700 hover:bg-red-100 rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
+                class="text-[#EF4444] hover:text-red-700 hover:bg-red-100 rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
                 title="Confirm delete"
               >
                 Yes
               </button>
               <button
                 @click.stop="cancelDelete"
-                class="text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
+                class="text-[#475569] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
                 title="Cancel"
               >
                 Cancel
@@ -86,7 +86,7 @@
             <button
               v-else
               @click.stop="showDeleteConfirm = true"
-              class="text-gray-400 hover:text-red-500 transition-colors"
+              class="text-[#64748B] hover:text-[#EF4444] transition-colors"
               title="Delete document"
             >
               <Trash2 class="w-4 h-4" />

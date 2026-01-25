@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="min-h-screen bg-[#EFF3F9] flex">
     <!-- Sidebar -->
     <ChatSidebar 
       :isOpen="isSidebarOpen" 
@@ -10,16 +10,16 @@
     <!-- Main Content -->
     <div class="flex-1 flex flex-col" :class="{ 'md:ml-80': isSidebarOpen }">
       <!-- Top Bar -->
-      <div class="flex items-center justify-between p-4 bg-white border-b border-gray-200">
+      <div class="flex items-center justify-between p-4 bg-white border-b border-[#E5E7EB]">
         <div class="flex items-center space-x-4">
           <button
             @click="isSidebarOpen = !isSidebarOpen"
-            class="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 md:hidden"
+            class="p-2 rounded-md text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] focus:outline-none focus:ring-2 focus:ring-[#2F5BFF] md:hidden"
             aria-label="Toggle sidebar"
           >
             <Menu class="w-5 h-5" />
           </button>
-          <h1 class="text-lg font-semibold text-gray-900">Documents</h1>
+          <h1 class="text-lg font-semibold text-[#0F172A]">Documents</h1>
         </div>
         <div class="flex items-center space-x-2">
         </div>
@@ -74,19 +74,19 @@
 
         <!-- Loading State -->
         <div v-if="chatStore.userId && isLoading && documents.length === 0" class="flex justify-center items-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span class="ml-3 text-gray-600">Loading documents...</span>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2F5BFF]"></div>
+          <span class="ml-3 text-[#475569]">Loading documents...</span>
         </div>
 
         <!-- Empty State -->
         <div v-else-if="chatStore.userId && !isLoading && documents.length === 0" class="text-center py-12">
-          <FileText class="mx-auto h-12 w-12 text-gray-400" />
-          <h3 class="mt-2 text-sm font-medium text-gray-900">No documents</h3>
-          <p class="mt-1 text-sm text-gray-500">Get started by creating your first document in chat.</p>
+          <FileText class="mx-auto h-12 w-12 text-[#94A3B8]" />
+          <h3 class="mt-2 text-sm font-medium text-[#0F172A]">No documents</h3>
+          <p class="mt-1 text-sm text-[#475569]">Get started by creating your first document in chat.</p>
           <div class="mt-6">
             <router-link
               to="/chat"
-              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-[#2F5BFF] hover:bg-[#1E40FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2F5BFF]"
             >
               <MessageCircle class="w-4 h-4 mr-2" />
               Start Chatting

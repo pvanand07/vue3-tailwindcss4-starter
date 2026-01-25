@@ -90,16 +90,38 @@ watch(() => props.chartSvg, () => {
 .chart-wrapper :deep(.title) {
   font-size: 16px;
   font-weight: 600;
-  fill: #374151;
+  fill: #0F172A;
 }
 
 .chart-wrapper :deep(.axis text) {
   font-size: 12px;
-  fill: #6b7280;
+  fill: #475569;
 }
 
 .chart-wrapper :deep(.legend text) {
   font-size: 12px;
-  fill: #374151;
+  fill: #0F172A;
+}
+
+/* Chart colors - Bar chart */
+.chart-wrapper :deep(.bar) {
+  fill: #2F5BFF;
+}
+
+.chart-wrapper :deep(.bar:hover) {
+  fill: #1E40FF;
+}
+
+/* Chart colors - Donut chart */
+.chart-wrapper :deep(.slice-0) {
+  fill: #2F5BFF;
+}
+
+.chart-wrapper :deep(.slice-1) {
+  fill: #A8B6FF;
+}
+
+.chart-wrapper :deep(.slice-2) {
+  fill: #E4E9FF;
 }
 </style>

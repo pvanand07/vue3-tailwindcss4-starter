@@ -2,11 +2,11 @@
   <div v-if="isOpen" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="handleClose">
     <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-        <h2 class="text-xl font-semibold text-slate-800">Upload Files</h2>
+      <div class="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between">
+        <h2 class="text-xl font-semibold text-[#0F172A]">Upload Files</h2>
         <button
           @click="handleClose"
-          class="text-slate-400 hover:text-slate-600 transition-colors"
+          class="text-[#64748B] hover:text-[#0F172A] transition-colors"
           aria-label="Close modal"
         >
           <X class="w-6 h-6" />
@@ -21,12 +21,12 @@
           @dragleave.prevent="isDragging = false"
           @drop.prevent="handleDrop"
           class="border-2 border-dashed rounded-lg p-8 text-center transition-colors"
-          :class="isDragging ? 'border-primary bg-primary/5' : 'border-slate-300 hover:border-primary/50'"
+          :class="isDragging ? 'border-[#2F5BFF] bg-[#E4E9FF]' : 'border-[#E5E7EB] hover:border-[#2F5BFF]/50'"
         >
-          <Upload class="w-12 h-12 mx-auto mb-4 text-slate-400" />
-          <p class="text-slate-600 mb-2">
+          <Upload class="w-12 h-12 mx-auto mb-4 text-[#94A3B8]" />
+          <p class="text-[#475569] mb-2">
             Drag and drop files here, or
-            <label class="text-primary hover:text-slate-700 cursor-pointer font-medium">
+            <label class="text-[#2F5BFF] hover:text-[#1E40FF] cursor-pointer font-medium">
               browse
               <input
                 ref="fileInput"
@@ -38,7 +38,7 @@
               />
             </label>
           </p>
-          <p class="text-sm text-slate-500">
+          <p class="text-sm text-[#94A3B8]">
             Supported formats: PDF, DOCX, XLSX, XLS
           </p>
         </div>
@@ -50,23 +50,23 @@
 
         <!-- Selected Files Preview -->
         <div v-if="selectedFiles.length > 0" class="mt-6">
-          <h3 class="text-sm font-medium text-slate-700 mb-3">Selected Files ({{ selectedFiles.length }})</h3>
+          <h3 class="text-sm font-medium text-[#0F172A] mb-3">Selected Files ({{ selectedFiles.length }})</h3>
           <div class="space-y-2">
             <div
               v-for="(file, index) in selectedFiles"
               :key="index"
-              class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
+              class="flex items-center justify-between p-3 bg-[#F1F5F9] rounded-lg border border-[#E5E7EB]"
             >
               <div class="flex items-center gap-3 flex-1 min-w-0">
-                <FileText class="w-5 h-5 text-slate-400 flex-shrink-0" />
+                <FileText class="w-5 h-5 text-[#94A3B8] flex-shrink-0" />
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-slate-700 truncate">{{ file.name }}</p>
-                  <p class="text-xs text-slate-500">{{ formatFileSize(file.size) }}</p>
+                  <p class="text-sm font-medium text-[#0F172A] truncate">{{ file.name }}</p>
+                  <p class="text-xs text-[#475569]">{{ formatFileSize(file.size) }}</p>
                 </div>
               </div>
               <button
                 @click="removeFile(index)"
-                class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2"
+                class="text-[#64748B] hover:text-[#EF4444] transition-colors flex-shrink-0 ml-2"
                 aria-label="Remove file"
               >
                 <Trash2 class="w-4 h-4" />
@@ -77,7 +77,7 @@
 
         <!-- Uploaded Files with Delete -->
         <div v-if="uploadedFiles.length > 0" class="mt-6">
-          <h3 class="text-sm font-medium text-slate-700 mb-3">Uploaded Files ({{ uploadedFiles.length }})</h3>
+          <h3 class="text-sm font-medium text-[#0F172A] mb-3">Uploaded Files ({{ uploadedFiles.length }})</h3>
           <div class="space-y-2">
             <div
               v-for="file in uploadedFiles"
@@ -85,10 +85,10 @@
               class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200"
             >
               <div class="flex items-center gap-3 flex-1 min-w-0">
-                <CheckCircle class="w-5 h-5 text-green-500 flex-shrink-0" />
+                <CheckCircle class="w-5 h-5 text-[#22C55E] flex-shrink-0" />
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-slate-700 truncate">{{ file.filename }}</p>
-                  <p class="text-xs text-slate-500">
+                  <p class="text-sm font-medium text-[#0F172A] truncate">{{ file.filename }}</p>
+                  <p class="text-xs text-[#475569]">
                     <span v-if="file.file_type === 'document'">{{ file.page_count }} pages</span>
                     <span v-if="file.file_type === 'excel'">{{ file.row_count }} rows, {{ file.column_count }} columns</span>
                   </p>
@@ -99,14 +99,14 @@
                 <span class="text-xs text-red-700 font-medium">Delete?</span>
                 <button
                   @click="confirmDeleteFile(file.doc_id)"
-                  class="text-red-600 hover:text-red-700 hover:bg-red-100 rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
+                  class="text-[#EF4444] hover:text-red-700 hover:bg-red-100 rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
                   title="Confirm delete"
                 >
                   Yes
                 </button>
                 <button
                   @click="cancelDeleteFile"
-                  class="text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
+                  class="text-[#475569] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded px-1.5 py-0.5 text-xs font-medium transition-colors"
                   title="Cancel"
                 >
                   Cancel
@@ -116,7 +116,7 @@
                 v-else
                 @click="showDeleteConfirm(file.doc_id)"
                 :disabled="isDeletingFile === file.doc_id"
-                class="text-slate-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2 disabled:opacity-50"
+                class="text-[#64748B] hover:text-[#EF4444] transition-colors flex-shrink-0 ml-2 disabled:opacity-50"
                 aria-label="Delete file"
               >
                 <Trash2 class="w-4 h-4" />
@@ -127,17 +127,17 @@
       </div>
 
       <!-- Footer -->
-      <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+      <div class="px-6 py-4 border-t border-[#E5E7EB] flex items-center justify-between">
         <button
           @click="handleClose"
-          class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          class="px-4 py-2 text-[#475569] hover:bg-[#F1F5F9] rounded-lg transition-colors"
         >
           Cancel
         </button>
         <button
           @click="handleUpload"
           :disabled="selectedFiles.length === 0 || isUploading"
-          class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          class="px-6 py-2 bg-[#2F5BFF] text-white rounded-lg hover:bg-[#1E40FF] disabled:bg-[#94A3B8] disabled:cursor-not-allowed transition-colors flex items-center gap-2"
         >
           <Upload v-if="!isUploading" class="w-4 h-4" />
           <Loader2 v-else class="w-4 h-4 animate-spin" />
