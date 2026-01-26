@@ -8,6 +8,9 @@ export interface ArtifactsData {
   artifact_id: string
   artifact_type: string
   plotly_fig_json?: string
+  output?: string  // CSV string or other output data
+  query?: string   // SQL query or other query that generated the artifact
+  row_count?: number  // Number of rows in the result
 }
 
 export interface ToolEvent {
@@ -58,6 +61,27 @@ export interface ThreadMessagesResponse {
   messages: MessageResponse[]
   has_more: boolean
   after: string | null
+}
+
+export interface ArtifactResponse {
+  id: string
+  message_id: string | null
+  thread_id: string
+  user_id: string
+  artifact_id: string
+  artifact_type: string | null
+  artifact_data: {
+    artifact_id: string
+    artifact_type: string
+    output: string  // Main content (CSV string, JSON, etc.)
+    query?: string
+    row_count?: number
+    plotly_fig_json?: string
+    sql_query?: string
+    user_id?: string
+    session_id?: string
+  }
+  created_at: string
 }
 
 export interface ChatState {
