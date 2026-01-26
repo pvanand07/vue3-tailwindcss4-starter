@@ -80,6 +80,13 @@ const copyMessage = async (text: string) => {
   }
 }
 
+// Handle adding text to input from question/option selections
+const handleAddToInput = (text: string) => {
+  if (chatInput.value) {
+    chatInput.value.appendToInput(text)
+  }
+}
+
 
 
 // Lifecycle
@@ -133,6 +140,7 @@ onUnmounted(() => {
             @toggle-thinking="toggleThinking"
             @copy-message="copyMessage"
             @cancel-request="chatStore.cancelRequest"
+            @add-to-input="handleAddToInput"
           />
           
           <!-- Loading Indicator -->

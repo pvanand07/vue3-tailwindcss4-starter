@@ -1,20 +1,39 @@
 <template>
-  <div 
-    v-html="renderedMarkdown" 
-    class="markdown-content text-sm md:text-base leading-relaxed"
-  />
+  <div class="markdown-content text-sm md:text-base leading-relaxed">
+    <template v-for="(segment, index) in contentSegments" :key="`segment-${index}`">
+      <!-- Text segment - render as markdown -->
+      <div 
+        v-if="segment.type === 'text'" 
+        v-html="segment.renderedMarkdown"
+      />
+      
+      <!-- Question/Option block -->
+      <QuestionOption
+        v-else-if="segment.type === 'question-options'"
+        :content="segment.content"
+        @add-to-input="handleAddToInput"
+      />
+    </template>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import MarkdownIt from 'markdown-it'
+import QuestionOption from './QuestionOption.vue'
+import { stripQuestionOptionTags } from '../../../utils/contentParser'
 
 interface Props {
   content: string
   class?: string
 }
 
+interface Emits {
+  (e: 'add-to-input', text: string): void
+}
+
 const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
 // Configure markdown-it with sensible defaults
 const md = new MarkdownIt({
@@ -42,9 +61,142 @@ md.renderer.rules.code_inline = (tokens: any[], idx: number) => {
   return `<code class="inline-code">${md.utils.escapeHtml(token.content)}</code>`
 }
 
-const renderedMarkdown = computed(() => {
-  return md.render(props.content)
+// Check if content contains question/option tags
+const hasQuestionOptionTags = (text: string): boolean => {
+  return /<question>|<option>/.test(text)
+}
+
+interface ContentSegment {
+  type: 'text' | 'question-options'
+  content: string
+  renderedMarkdown?: string
+}
+
+// Parse content into segments (text and question/option blocks)
+const contentSegments = computed((): ContentSegment[] => {
+  const content = props.content
+  if (!content) {
+    return []
+  }
+
+  // If content doesn't contain question/option tags, return as single text segment
+  if (!hasQuestionOptionTags(content)) {
+    return [{
+      type: 'text',
+      content,
+      renderedMarkdown: md.render(content)
+    }]
+  }
+
+  const segments: ContentSegment[] = []
+  
+  // Find all question/option tag positions
+  // Pattern matches: <question>...</question>, <option>...</option>, or <question/>
+  const tagPattern = /<question>.*?<\/question>|<option>.*?<\/option>|<question\s*\/>/gs
+  const matches: Array<{ start: number; end: number; content: string }> = []
+  
+  let match: RegExpExecArray | null
+  tagPattern.lastIndex = 0
+  while ((match = tagPattern.exec(content)) !== null) {
+    matches.push({
+      start: match.index,
+      end: tagPattern.lastIndex,
+      content: match[0]
+    })
+  }
+
+  if (matches.length === 0) {
+    return [{
+      type: 'text',
+      content,
+      renderedMarkdown: md.render(content)
+    }]
+  }
+
+  // Group consecutive question/option tags into blocks
+  let lastIndex = 0
+  let currentBlock: string[] = []
+  let blockStart = matches[0].start
+
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i]
+    const prevMatch = i > 0 ? matches[i - 1] : null
+    
+    // Check if this match is part of the current block (within reasonable distance)
+    const isConsecutive = !prevMatch || (match.start - prevMatch.end) < 100
+    
+    if (isConsecutive) {
+      currentBlock.push(match.content)
+    } else {
+      // Save current block and start a new one
+      if (currentBlock.length > 0) {
+        // Add text before block
+        if (blockStart > lastIndex) {
+          const textContent = content.substring(lastIndex, blockStart)
+          if (textContent.trim()) {
+            segments.push({
+              type: 'text',
+              content: textContent,
+              renderedMarkdown: md.render(textContent)
+            })
+          }
+        }
+        
+        // Add question/option block
+        segments.push({
+          type: 'question-options',
+          content: currentBlock.join(' ')
+        })
+        
+        lastIndex = matches[i - 1].end
+      }
+      
+      currentBlock = [match.content]
+      blockStart = match.start
+    }
+  }
+
+  // Handle the last block
+  if (currentBlock.length > 0) {
+    // Add text before block
+    if (blockStart > lastIndex) {
+      const textContent = content.substring(lastIndex, blockStart)
+      if (textContent.trim()) {
+        segments.push({
+          type: 'text',
+          content: textContent,
+          renderedMarkdown: md.render(textContent)
+        })
+      }
+    }
+    
+    // Add question/option block
+    segments.push({
+      type: 'question-options',
+      content: currentBlock.join(' ')
+    })
+    
+    lastIndex = matches[matches.length - 1].end
+  }
+
+  // Add remaining text after the last block
+  if (lastIndex < content.length) {
+    const textContent = content.substring(lastIndex)
+    if (textContent.trim()) {
+      segments.push({
+        type: 'text',
+        content: textContent,
+        renderedMarkdown: md.render(textContent)
+      })
+    }
+  }
+  
+  return segments
 })
+
+const handleAddToInput = (text: string) => {
+  emit('add-to-input', text)
+}
 </script>
 
 <style scoped>

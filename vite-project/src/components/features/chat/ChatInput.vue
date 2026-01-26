@@ -183,9 +183,26 @@ const setInputValue = (value: string) => {
   inputMessage.value = value
 }
 
+// Append text to input (with comma separator if needed)
+const appendToInput = (text: string) => {
+  const currentValue = inputMessage.value.trim()
+  if (currentValue) {
+    inputMessage.value = `${currentValue}, ${text}`
+  } else {
+    inputMessage.value = text
+  }
+  // Focus the input after appending
+  nextTick(() => {
+    if (messageInput.value) {
+      messageInput.value.focus()
+    }
+  })
+}
+
 // Expose methods for parent component
 defineExpose({
   focus,
-  setInputValue
+  setInputValue,
+  appendToInput
 })
 </script>

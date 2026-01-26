@@ -36,7 +36,11 @@
             <!-- Render content segments (text and inline artifacts) -->
             <template v-for="(segment, segmentIndex) in contentSegments" :key="`segment-${segmentIndex}`">
               <!-- Text segment -->
-              <MarkdownRenderer v-if="segment.type === 'text'" :content="segment.content" />
+              <MarkdownRenderer 
+                v-if="segment.type === 'text'" 
+                :content="segment.content"
+                @add-to-input="$emit('add-to-input', $event)"
+              />
               
               <!-- Artifact segment (inline chart) -->
               <PlotlyChart 
@@ -131,6 +135,7 @@ interface Emits {
   (e: 'toggle-thinking', index: number): void
   (e: 'copy-message', text: string): void
   (e: 'cancel-request'): void
+  (e: 'add-to-input', text: string): void
 }
 
 const props = defineProps<Props>()
