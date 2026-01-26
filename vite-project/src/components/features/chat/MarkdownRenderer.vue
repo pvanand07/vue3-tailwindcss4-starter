@@ -21,7 +21,6 @@
 import { computed } from 'vue'
 import MarkdownIt from 'markdown-it'
 import QuestionOption from './QuestionOption.vue'
-import { stripQuestionOptionTags } from '../../../utils/contentParser'
 
 interface Props {
   content: string

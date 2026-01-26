@@ -77,6 +77,7 @@
               <CsvTable 
                 v-else-if="segment.type === 'csv-artifact'" 
                 :csv-data="segment.csvData!"
+                :title="segment.artifactTitle"
               />
               
               <!-- Loading artifact placeholder -->
@@ -154,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { ThumbsUp, ThumbsDown, Copy, Share2, Square } from 'lucide-vue-next'
 import MarkdownRenderer from './MarkdownRenderer.vue'
 import PlotlyChart from './PlotlyChart.vue'
@@ -182,10 +183,10 @@ const chatStore = useChatStore()
 // Regex pattern to match artifact references
 // Matches patterns like:
 // - <artifact_id="uuid" type="text/csv">
-// - <artifact_id='uuid' type='application/vnd.plotly.v1+json'>
-// - <artifact_id=uuid type="text/csv"> (without quotes)
-// Captures: [1] = artifact_id (UUID), [2] = type (MIME type)
-const ARTIFACT_PATTERN = /<artifact_id=['"]?([a-f0-9-]+)['"]?\s+type=['"]([^'"]+)['"]>/gi
+// - <artifact_id="uuid" type="text/csv" title="My Data">
+// - <artifact_id='uuid' type='application/vnd.plotly.v1+json' title='Chart Title'>
+// Captures: [1] = artifact_id (UUID), [2] = type (MIME type), [3] = title (optional)
+const ARTIFACT_PATTERN = /<artifact_id=['"]?([a-f0-9-]+)['"]?\s+type=['"]([^'"]+)['"](?:\s+title=['"]([^'"]+)['"])?>/gi
 
 // Build artifact maps from tool_events
 // For Plotly: artifact_id → plotly_fig_json
@@ -241,6 +242,7 @@ interface ContentSegment {
   content: string
   artifactId?: string
   artifactType?: string
+  artifactTitle?: string
   plotlyJson?: string
   csvData?: string
 }
@@ -261,6 +263,7 @@ const contentSegments = computed((): ContentSegment[] => {
   while ((match = ARTIFACT_PATTERN.exec(content)) !== null) {
     const artifactId = match[1]
     const artifactType = match[2]
+    const artifactTitle = match[3] // Optional title
     const matchStart = match.index
     const matchEnd = ARTIFACT_PATTERN.lastIndex
     
@@ -284,6 +287,7 @@ const contentSegments = computed((): ContentSegment[] => {
           content: match[0],
           artifactId,
           artifactType,
+          artifactTitle,
           plotlyJson
         })
         lastIndex = matchEnd
@@ -297,6 +301,7 @@ const contentSegments = computed((): ContentSegment[] => {
           content: match[0],
           artifactId,
           artifactType,
+          artifactTitle,
           csvData
         })
         lastIndex = matchEnd
@@ -313,6 +318,7 @@ const contentSegments = computed((): ContentSegment[] => {
           content: match[0],
           artifactId,
           artifactType: cachedArtifact.type,
+          artifactTitle,
           plotlyJson: cachedArtifact.data
         })
       } else if (isCsvArtifact(cachedArtifact.type)) {
@@ -321,6 +327,7 @@ const contentSegments = computed((): ContentSegment[] => {
           content: match[0],
           artifactId,
           artifactType: cachedArtifact.type,
+          artifactTitle,
           csvData: cachedArtifact.data
         })
       }
@@ -334,7 +341,8 @@ const contentSegments = computed((): ContentSegment[] => {
       type: 'loading-artifact',
       content: match[0],
       artifactId,
-      artifactType
+      artifactType,
+      artifactTitle
     })
     
     // Trigger API fetch (async)
