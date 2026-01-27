@@ -70,3 +70,4 @@ export function isPlotlyArtifact(artifactType: string): boolean {
   return artifactType === 'application/vnd.plotly.v1+json'
 }
 
+
