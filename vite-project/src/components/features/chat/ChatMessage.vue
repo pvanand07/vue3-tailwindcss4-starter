@@ -13,7 +13,12 @@
               :aria-expanded="message.thinkingExpanded"
               aria-controls="thinking-content"
             >
-              <span>🤔 Thinking...</span>
+              <span class="flex items-center gap-2">
+                <span v-if="loadingMessage" class="inline-block w-4 h-4 border-2 border-[var(--color-text-secondary)] border-t-transparent rounded-full animate-spin"></span>
+                <span v-else>🤔</span>
+                <span v-if="loadingMessage">{{ loadingMessage }}</span>
+                <span v-else>Thinking...</span>
+              </span>
               <span class="text-xs transition-transform duration-200" :class="{ 'rotate-180': message.thinkingExpanded }">▼</span>
             </div>
             <div 
@@ -179,6 +184,25 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 const chatStore = useChatStore()
+
+// Map tool names to friendly loading messages
+const toolLoadingMessages: Record<string, string> = {
+  'calculator': 'Calculating...',
+  'get_current_time': 'Getting current time...',
+  'search_documents': 'Searching documents...',
+  'query_duckdb': 'Analysing data...',
+  'create_view': 'Creating view...',
+  'create_visualization': 'Creating visualization...',
+  'execute_python': 'Executing code...'
+}
+
+// Get friendly loading message for current tool
+const loadingMessage = computed(() => {
+  if (!props.message.currentLoadingTool) {
+    return null
+  }
+  return toolLoadingMessages[props.message.currentLoadingTool] || props.message.currentLoadingTool
+})
 
 // Regex pattern to match artifact references
 // Matches patterns like:

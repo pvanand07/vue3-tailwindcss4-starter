@@ -345,9 +345,8 @@ export const useChatStore = defineStore('chat', () => {
           messages.value[assistantIndex].tools = []
         }
         messages.value[assistantIndex].tools!.push(toolData)
-        if (messages.value[assistantIndex].tools!.length === 1) {
-          messages.value[assistantIndex].thinkingExpanded = true
-        }
+        // Set current loading tool name
+        messages.value[assistantIndex].currentLoadingTool = toolData.name
       }
 
       // Handle tool ends
@@ -371,6 +370,10 @@ export const useChatStore = defineStore('chat', () => {
         console.log('💬 Chunk callback:', content)
         responseContent += content
         messages.value[assistantIndex].content = responseContent
+        // Clear loading tool when first chunk arrives
+        if (messages.value[assistantIndex].currentLoadingTool) {
+          messages.value[assistantIndex].currentLoadingTool = undefined
+        }
       }
 
       console.log('🚀 Starting API call...')

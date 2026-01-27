@@ -30,6 +30,7 @@ export interface ChatMessage {
   tool_events?: ToolEvent[]
   thinkingExpanded?: boolean
   isLoading?: boolean
+  currentLoadingTool?: string
   timestamp?: string
   created_at?: string
 }
